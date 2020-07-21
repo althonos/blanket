@@ -13,11 +13,11 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
             if let Some(receiver) = m.sig.receiver() {
                 match receiver {
                     syn::FnArg::Receiver(r) if r.reference.is_none() => {
-                        let msg = "cannot derive `Ref` for a trait declaring `self` methods";
+                        let msg = "cannot derive `Mut` for a trait declaring `self` methods";
                         return Err(syn::Error::new(r.span(), msg));
                     }
                     syn::FnArg::Typed(pat) => {
-                        let msg = "cannot derive `Ref` for a trait declaring methods with arbitrary receiver types";
+                        let msg = "cannot derive `Mut` for a trait declaring methods with arbitrary receiver types";
                         return Err(syn::Error::new(pat.span(), msg));
                     }
                     _ => (),

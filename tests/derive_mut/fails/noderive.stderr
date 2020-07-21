@@ -1,10 +1,10 @@
 error[E0277]: the trait bound `&mut AtomicCounter: Counter` is not satisfied
-  --> $DIR/noderive.rs:36:47
+  --> $DIR/noderive.rs:35:47
    |
 16 | struct CounterWrapper<C: Counter> {
    |                          ------- required by this bound in `CounterWrapper`
 ...
-36 |     let wrapper_by_ref = CounterWrapper::from(&mut counter);
+35 |     let wrapper_by_ref = CounterWrapper::from(&mut counter);
    |                                               -^^^^^^^^^^^
    |                                               |
    |                                               the trait `Counter` is not implemented for `&mut AtomicCounter`
@@ -14,12 +14,12 @@ error[E0277]: the trait bound `&mut AtomicCounter: Counter` is not satisfied
              <AtomicCounter as Counter>
 
 error[E0277]: the trait bound `&mut AtomicCounter: Counter` is not satisfied
-  --> $DIR/noderive.rs:36:26
+  --> $DIR/noderive.rs:35:26
    |
 16 | struct CounterWrapper<C: Counter> {
    |                          ------- required by this bound in `CounterWrapper`
 ...
-36 |     let wrapper_by_ref = CounterWrapper::from(&mut counter);
+35 |     let wrapper_by_ref = CounterWrapper::from(&mut counter);
    |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Counter` is not implemented for `&mut AtomicCounter`
    |
    = help: the following implementations were found:
