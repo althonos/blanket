@@ -5,13 +5,13 @@ use std::sync::atomic::Ordering;
 
 use blanket::blanket;
 
-#[blanket(derive(Box))]
-pub trait MyTrait {
-    fn do_something(&self);
-}
-
 #[test]
 fn test_trait() {
+
+    #[blanket(derive(Box))]
+    pub trait MyTrait {
+        fn do_something(&self);
+    }
 
     #[derive(Default)]
     struct Something {
@@ -34,13 +34,13 @@ fn test_trait() {
     assert_eq!(boxed.things_done.load(Ordering::SeqCst), 2);
 }
 
-#[blanket(derive(Box))]
-pub trait MyTraitMut {
-    fn do_something_else(&mut self);
-}
-
 #[test]
 fn test_trait_mut() {
+    #[blanket(derive(Box))]
+    pub trait MyTraitMut {
+        fn do_something_else(&mut self);
+    }
+
     #[derive(Default)]
     struct Something {
         other_things_done: usize
@@ -62,14 +62,14 @@ fn test_trait_mut() {
     assert_eq!(boxed.other_things_done, 2);
 }
 
-#[blanket(derive(Box))]
-pub trait MyTraitMix {
-    fn do_something(&self);
-    fn do_something_else(&mut self);
-}
-
 #[test]
 fn test_trait_mix() {
+    #[blanket(derive(Box))]
+    pub trait MyTraitMix {
+        fn do_something(&self);
+        fn do_something_else(&mut self);
+    }
+
     #[derive(Default)]
     struct Something{
         things_done: AtomicU8,

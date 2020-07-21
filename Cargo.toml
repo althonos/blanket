@@ -32,3 +32,7 @@ _doc = []
 [[test]]
 name = "derive_ref"
 path = "tests/derive_ref/mod.rs"
+
+[[test]]
+name = "derive_box"
+path = "tests/derive_box/mod.rs"
