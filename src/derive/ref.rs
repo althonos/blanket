@@ -44,7 +44,7 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
 
     Ok(parse_quote!(
         #[automatically_derived]
-        impl<T: #name + ?Sized> #name for &T {
+        impl<B: #name + ?Sized> #name for &B {
             #(#methods)*
         }
     ))

@@ -20,8 +20,30 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
 
     Ok(parse_quote!(
         #[automatically_derived]
-        impl<T: #name> #name for Box<T> {
+        impl<B: #name> #name for Box<B> {
             #(#methods)*
         }
     ))
+}
+
+
+#[cfg(test)]
+mod tests {
+    mod derive {
+
+        use syn::parse_quote;
+
+        #[test]
+        fn empty() {
+            let trait_ = parse_quote!(trait MyTrait {});
+            let derived = super::super::derive(&trait_).unwrap();
+            assert_eq!(
+                derived,
+                parse_quote!(
+                    #[automatically_derived]
+                    impl<B: MyTrait> MyTrait for Box<B> {}
+                )
+            );
+        }
+    }
 }
