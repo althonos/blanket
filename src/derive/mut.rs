@@ -61,5 +61,46 @@ mod tests {
                 )
             );
         }
+
+        #[test]
+        fn receiver_mut() {
+            let trait_ = parse_quote!(
+                trait MyTrait {
+                    fn my_method(&mut self);
+                }
+            );
+            assert_eq!(
+                super::super::derive(&trait_).unwrap(),
+                parse_quote!(
+                    #[automatically_derived]
+                    impl<B: MyTrait + ?Sized> MyTrait for &mut B {
+                        #[inline]
+                        fn my_method(&mut self) {
+                            (*(*self)).my_method()
+                        }
+                    }
+                )
+            );
+        }
+
+        #[test]
+        fn receiver_self() {
+            let trait_ = parse_quote!(
+                trait MyTrait {
+                    fn my_method(self);
+                }
+            );
+            assert!(super::super::derive(&trait_).is_err());
+        }
+
+        #[test]
+        fn receiver_arbitrary() {
+            let trait_ = parse_quote!(
+                trait MyTrait {
+                    fn my_method(self: Box<Self>);
+                }
+            );
+            assert!(super::super::derive(&trait_).is_err());
+        }
     }
 }
