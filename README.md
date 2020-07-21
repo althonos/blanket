@@ -26,8 +26,9 @@ like for a `trait` item.
 
 ### `#[blanket(derive(...))]`
 
-Use this macro attribute to derive a blanket implementations for a trait. Some
-derives may require that the trait methods take `&self` or `&mut self` only.
+Use this macro attribute to derive a blanket implementation for a trait,
+provided the trait methods fit the constraints for that derive, such as
+only declaring methods with `&self` of `&mut self` as their receiver.
 
 Given a trait `T`, the following derives are supported:
 
