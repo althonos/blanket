@@ -1,8 +1,10 @@
 [package]
 name = "blanket"
 version = "0.1.0"
-authors = ["Martin Larralde <martin.larralde@ens-paris-saclay.fr>"]
+authors = ["Martin Larralde <martin.larralde@embl.de>"]
 edition = "2018"
+license = "MIT"
+description = "A simple macro to derive blanket implementations for your traits."
 
 [package.metadata.docs.rs]
 features = [ "_doc" ]
@@ -23,6 +25,10 @@ features = ["full"]
 [dev-dependencies]
 trybuild = "1.0"
 
-
 [features]
 _doc = []
+
+
+[[test]]
+name = "derive_ref"
+path = "tests/derive_ref/mod.rs"

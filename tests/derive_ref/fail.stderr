@@ -1,0 +1,26 @@
+error[E0277]: the trait bound `&AtomicCounter: Counter` is not satisfied
+  --> $DIR/fail.rs:35:47
+   |
+19 | struct CounterWrapper<C: Counter> {
+   |                          ------- required by this bound in `CounterWrapper`
+...
+35 |     let wrapper_by_ref = CounterWrapper::from(&counter);
+   |                                               -^^^^^^^
+   |                                               |
+   |                                               the trait `Counter` is not implemented for `&AtomicCounter`
+   |                                               help: consider removing the leading `&`-reference
+   |
+   = help: the following implementations were found:
+             <AtomicCounter as Counter>
+
+error[E0277]: the trait bound `&AtomicCounter: Counter` is not satisfied
+  --> $DIR/fail.rs:35:26
+   |
+19 | struct CounterWrapper<C: Counter> {
+   |                          ------- required by this bound in `CounterWrapper`
+...
+35 |     let wrapper_by_ref = CounterWrapper::from(&counter);
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Counter` is not implemented for `&AtomicCounter`
+   |
+   = help: the following implementations were found:
+             <AtomicCounter as Counter>
