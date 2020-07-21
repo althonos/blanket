@@ -145,7 +145,7 @@ fn test_receiver_mix() {
 }
 
 #[test]
-fn test_trait_own() {
+fn test_receiver_own() {
     #[blanket(derive(Box))]
     pub trait StringBuilder {
         fn build(self) -> String;

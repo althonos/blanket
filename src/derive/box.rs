@@ -160,8 +160,6 @@ mod tests {
             );
             let derived = super::super::derive(&trait_).unwrap();
 
-            println!("{}", quote::quote!(#derived));
-
             assert_eq!(
                 derived,
                 parse_quote!(

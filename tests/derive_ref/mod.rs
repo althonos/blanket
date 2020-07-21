@@ -7,7 +7,7 @@ use std::sync::atomic::Ordering;
 use blanket::blanket;
 
 #[test]
-fn test_derive() {
+fn test_receiver_ref() {
     #[blanket(derive(Ref))]
     pub trait Counter {
         fn increment(&self);
@@ -49,6 +49,49 @@ fn test_derive() {
     wrapper_by_ref.inner.increment();
     assert_eq!(wrapper_by_ref.inner.count.load(Ordering::Relaxed), 1);
     assert_eq!(counter.count.load(Ordering::Relaxed), 1);
+}
+
+#[test]
+fn test_trait_generic() {
+    #[blanket(derive(Ref))]
+    pub trait AsRef2<T> {
+        fn as_ref2(&self) -> &T;
+    }
+
+    #[derive(Default)]
+    struct Owner<T> {
+        owned: T,
+    }
+
+    impl<T> AsRef2<T> for Owner<T> {
+        fn as_ref2(&self) -> &T {
+            &self.owned
+        }
+    }
+
+    struct Wrapper<T, A: AsRef2<T>> {
+        __marker: std::marker::PhantomData<T>,
+        wrapped: A,
+    };
+
+    impl<T, A: AsRef2<T>> From<A> for Wrapper<T, A> {
+        fn from(wrapped: A) -> Self {
+            Wrapper {
+                wrapped,
+                __marker: std::marker::PhantomData,
+            }
+        }
+    }
+
+    let string_owner: Owner<String> = Owner::default();
+    assert_eq!(string_owner.as_ref2(), "");
+    let string_owner_wrapper = Wrapper::from(string_owner);
+    assert_eq!(string_owner_wrapper.wrapped.as_ref2(), "");
+
+    let string_owner: Owner<String> = Owner::default();
+    assert_eq!(string_owner.as_ref2(), "");
+    let string_owner_ref_wrapper = Wrapper::from(&string_owner);
+    assert_eq!(string_owner_ref_wrapper.wrapped.as_ref2(), "");
 }
 
 #[test]

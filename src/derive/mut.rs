@@ -3,11 +3,11 @@ use syn::spanned::Spanned;
 
 use crate::utils::deref_expr;
 use crate::utils::signature_to_method_call;
+use crate::utils::trait_to_generic_ident;
 
 pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
-    let name = &trait_.ident;
+    // build the methods
     let mut methods: Vec<syn::ImplItemMethod> = Vec::new();
-
     for item in trait_.items.iter() {
         if let syn::TraitItem::Method(ref m) = item {
             if let Some(receiver) = m.sig.receiver() {
@@ -33,9 +33,23 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
         }
     }
 
+    // build an identifier for the generic type used for the implementation
+    let trait_ident = &trait_.ident;
+    let generic_type = trait_to_generic_ident(&trait_);
+
+    // build the generics for the impl block:
+    // we use the same generics as the trait itself, plus
+    // a generic type that implements the trait for which we provide the
+    // blanket implementation
+    let trait_generics = &trait_.generics;
+    let mut impl_generics = trait_generics.clone();
+    impl_generics.params.push(syn::GenericParam::Type(
+        parse_quote!(#generic_type: #trait_ident #trait_generics + ?Sized),
+    ));
+
     Ok(parse_quote!(
         #[automatically_derived]
-        impl<B: #name + ?Sized> #name for &mut B {
+        impl #impl_generics #trait_ident #trait_generics for &mut #generic_type {
             #(#methods)*
         }
     ))
@@ -57,7 +71,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<B: MyTrait + ?Sized> MyTrait for &mut B {}
+                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {}
                 )
             );
         }
@@ -73,7 +87,7 @@ mod tests {
                 super::super::derive(&trait_).unwrap(),
                 parse_quote!(
                     #[automatically_derived]
-                    impl<B: MyTrait + ?Sized> MyTrait for &mut B {
+                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {
                         #[inline]
                         fn my_method(&mut self) {
                             (*(*self)).my_method()
@@ -101,6 +115,22 @@ mod tests {
                 }
             );
             assert!(super::super::derive(&trait_).is_err());
+        }
+
+        #[test]
+        fn generics() {
+            let trait_ = parse_quote!(
+                trait Trait<T> {}
+            );
+            let derived = super::super::derive(&trait_).unwrap();
+
+            assert_eq!(
+                derived,
+                parse_quote!(
+                    #[automatically_derived]
+                    impl<T, T_: Trait<T> + ?Sized> Trait<T> for &mut T_ {}
+                )
+            );
         }
     }
 }
