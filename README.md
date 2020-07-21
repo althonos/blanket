@@ -49,6 +49,36 @@ The following derives are available:
 | Mut    | `impl<T: Trait + ?Sized> Trait for &mut T` | ✔️            | ✔️                |             |
 | Box    | `impl<T: Trait> Trait for Box<T>`          | ✔️            | ✔️                | ✔️           |
 
+For instance, with our own version of `std::fmt::Write`, we can provide
+an implementation for `Box<impl Write>` and `&mut impl Write`:
+
+```rust
+extern crate blanket;
+use blanket::blanket;
+
+#[blanket(derive(Mut, Box))]
+pub trait Write {
+    fn write_str(&mut self, s: &str) -> std::fmt::Result;
+    fn write_char(&mut self, c: char) -> std::fmt::Result {
+         self.write_str(c.encode_utf8(&mut [0; 4]))
+    }
+}
+```
+
+Note that we can't derive `Ref` because the `Write` trait we declared expects
+mutable references, which we can't provide from an immutable reference. If we
+were to try, the compiler would warn us:
+
+```rustc
+---- src/lib.rs - (line 55) stdout ----
+error: cannot derive `Ref` for a trait declaring `&mut self` methods
+ --> src/lib.rs:61:18
+  |
+8 |     fn write_str(&mut self, s: &str) -> std::fmt::Result;
+  |                  ^^^^^^^^^
+```
+
+
 ### `#[blanket(default = "...")]`
 
 `blanket` can delegate default implementations of trait methods to functions
@@ -100,9 +130,14 @@ trait Visitor {
 
 ## ✒️ To-Do
 
-- [ ] Add support for traits with generic arguments.
-- [ ] Add support for `#[derive(Rc)]`
-- [ ] Add support for `#[derive(Arc)]`
+- ✔️ Delegation of default method to external functions.
+- ✔️ `#[derive(Ref)]`
+- ✔️ `#[derive(Mut)]`
+- ✔️ `#[derive(Box)]`
+- ❌ Update `Box` to allow unsized types if possible.
+- ❌ Support for traits with generic arguments.
+- ❌ `#[derive(Rc)]`
+- ❌ `#[derive(Arc)]`
 
 ## 📋 Changelog
 
