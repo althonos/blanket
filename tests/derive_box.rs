@@ -1,6 +1,10 @@
 #![allow(unused)]
 
 extern crate blanket;
+
+use std::sync::atomic::AtomicU8;
+use std::sync::atomic::Ordering;
+
 use blanket::blanket;
 
 #[blanket(derive(Box))]
@@ -8,9 +12,56 @@ pub trait MyTrait {
     fn do_something(&self);
 }
 
+#[test]
+fn test_trait() {
+
+    #[derive(Default)]
+    struct Something {
+        things_done: std::sync::atomic::AtomicU8
+    }
+
+    impl MyTrait for Something {
+        fn do_something(&self) {
+            self.things_done.fetch_add(1, Ordering::SeqCst);
+        }
+    }
+
+    let something = Something::default();
+    assert_eq!(something.things_done.load(Ordering::SeqCst), 0);
+    something.do_something();
+    assert_eq!(something.things_done.load(Ordering::SeqCst), 1);
+
+    let boxed = Box::new(something);
+    boxed.do_something();
+    assert_eq!(boxed.things_done.load(Ordering::SeqCst), 2);
+}
+
 #[blanket(derive(Box))]
 pub trait MyTraitMut {
     fn do_something_else(&mut self);
+}
+
+#[test]
+fn test_trait_mut() {
+    #[derive(Default)]
+    struct Something {
+        other_things_done: usize
+    }
+
+    impl MyTraitMut for Something {
+        fn do_something_else(&mut self) {
+            self.other_things_done += 1;
+        }
+    }
+
+    let mut something = Something::default();
+    assert_eq!(something.other_things_done, 0);
+    something.do_something_else();
+    assert_eq!(something.other_things_done, 1);
+
+    let mut boxed = Box::new(something);
+    boxed.do_something_else();
+    assert_eq!(boxed.other_things_done, 2);
 }
 
 #[blanket(derive(Box))]
@@ -19,51 +70,34 @@ pub trait MyTraitMix {
     fn do_something_else(&mut self);
 }
 
+#[test]
+fn test_trait_mix() {
+    #[derive(Default)]
+    struct Something{
+        things_done: std::sync::atomic::AtomicU8,
+        other_things_done: usize
+    }
 
-// #[test]
-// fn test_default() {
-//
-//     #[derive(Default)]
-//     struct CharCounter {
-//         count: usize
-//     }
-//
-//     impl Visitor for CharCounter {
-//         fn visit_char(&mut self, c: char) {
-//             self.count += 1
-//         }
-//     }
-//
-//     let mut counter = CharCounter::default();
-//     let string = String::from("Hello, world!");
-//     counter.visit_str(&string);
-//
-//     assert_eq!(counter.count, string.len());
-// }
-//
-// #[test]
-// fn test_overload() {
-//
-//     #[derive(Default)]
-//     struct CharBytesCounter {
-//         count: usize,
-//         bytes: usize,
-//     }
-//
-//     impl Visitor for CharBytesCounter {
-//         fn visit_str(&mut self, s: &str) {
-//             self.bytes += s.as_bytes().len();
-//             self::visitor::visit_str(self, s);
-//         }
-//         fn visit_char(&mut self, c: char) {
-//             self.count += 1
-//         }
-//     }
-//
-//     let mut counter = CharBytesCounter::default();
-//     let string = String::from("Hello, 🌍!");
-//     counter.visit_str(&string);
-//
-//     assert_eq!(counter.count, string.chars().enumerate().last().unwrap().0 + 1);
-//     assert_eq!(counter.bytes, string.as_bytes().len());
-// }
+    impl MyTraitMix for Something {
+        fn do_something(&self) {
+            self.things_done.fetch_add(1, Ordering::SeqCst);
+        }
+        fn do_something_else(&mut self) {
+            self.other_things_done += 1;
+        }
+    }
+
+    let mut something = Something::default();
+    assert_eq!(something.things_done.load(Ordering::SeqCst), 0);
+    something.do_something();
+    assert_eq!(something.things_done.load(Ordering::SeqCst), 1);
+    assert_eq!(something.other_things_done, 0);
+    something.do_something_else();
+    assert_eq!(something.other_things_done, 1);
+
+    let mut boxed = Box::new(something);
+    boxed.do_something();
+    assert_eq!(boxed.things_done.load(Ordering::SeqCst), 2);
+    boxed.do_something_else();
+    assert_eq!(boxed.other_things_done, 2);
+}
