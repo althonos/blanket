@@ -97,8 +97,11 @@ pub fn blanket(
     let attribute_args = parse_macro_input!(args as syn::AttributeArgs);
     // parse macro arguments and immediately exit if they are invalid
     let args = match Args::from_args(&attribute_args) {
-        Err(e) => return proc_macro::TokenStream::from(e.to_compile_error()),
         Ok(args) => args,
+        Err(e) => {
+            let err = e.to_compile_error();
+            return proc_macro::TokenStream::from(quote!(#err #trait_));
+        }
     };
     // generate output
     let mut out = proc_macro2::TokenStream::new();

@@ -70,6 +70,7 @@ pub fn signature_to_method_call(sig: &syn::Signature) -> syn::Result<syn::ExprMe
         }
     }
 
+    // Write the method call
     Ok(syn::ExprMethodCall {
         attrs: Vec::new(),
         receiver: Box::new(syn::parse2(quote_spanned!(span=> self))?),
@@ -81,7 +82,7 @@ pub fn signature_to_method_call(sig: &syn::Signature) -> syn::Result<syn::ExprMe
     })
 }
 
-///
+/// Prepend a module path to a function call name.
 pub fn prepend_function_path(call: &mut syn::ExprCall, module: syn::Path) -> syn::Result<()> {
     if let syn::Expr::Path(ref mut path) = *call.func {
         for (i, segment) in module.segments.into_iter().enumerate() {
