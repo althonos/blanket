@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 extern crate blanket;
 
 use std::sync::atomic::AtomicU8;
@@ -17,7 +15,7 @@ fn test_trait() {
 
     #[derive(Default)]
     struct Something {
-        things_done: std::sync::atomic::AtomicU8
+        things_done: AtomicU8
     }
 
     impl MyTrait for Something {
@@ -74,7 +72,7 @@ pub trait MyTraitMix {
 fn test_trait_mix() {
     #[derive(Default)]
     struct Something{
-        things_done: std::sync::atomic::AtomicU8,
+        things_done: AtomicU8,
         other_things_done: usize
     }
 
