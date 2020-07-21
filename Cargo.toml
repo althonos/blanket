@@ -36,3 +36,7 @@ path = "tests/derive_ref/mod.rs"
 [[test]]
 name = "derive_box"
 path = "tests/derive_box/mod.rs"
+
+[[test]]
+name = "derive_mut"
+path = "tests/derive_mut/mod.rs"
