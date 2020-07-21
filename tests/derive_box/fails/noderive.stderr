@@ -1,0 +1,17 @@
+error[E0277]: the trait bound `std::boxed::Box<AtomicCounter>: Counter` is not satisfied
+  --> $DIR/noderive.rs:35:51
+   |
+16 | struct CounterWrapper<C: Counter> {
+   |                          ------- required by this bound in `CounterWrapper`
+...
+35 |     let mut wrapper_by_box = CounterWrapper::from(Box::new(counter));
+   |                                                   ^^^^^^^^^^^^^^^^^ the trait `Counter` is not implemented for `std::boxed::Box<AtomicCounter>`
+
+error[E0277]: the trait bound `std::boxed::Box<AtomicCounter>: Counter` is not satisfied
+  --> $DIR/noderive.rs:35:30
+   |
+16 | struct CounterWrapper<C: Counter> {
+   |                          ------- required by this bound in `CounterWrapper`
+...
+35 |     let mut wrapper_by_box = CounterWrapper::from(Box::new(counter));
+   |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Counter` is not implemented for `std::boxed::Box<AtomicCounter>`

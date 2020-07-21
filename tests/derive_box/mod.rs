@@ -6,95 +6,190 @@ use std::sync::atomic::Ordering;
 use blanket::blanket;
 
 #[test]
-fn test_trait() {
+fn test_receiver_ref() {
     #[blanket(derive(Box))]
-    pub trait MyTrait {
-        fn do_something(&self);
+    pub trait Counter {
+        fn increment(&self);
     }
 
     #[derive(Default)]
-    struct Something {
-        things_done: AtomicU8,
+    struct AtomicCounter {
+        count: AtomicU8,
     }
 
-    impl MyTrait for Something {
-        fn do_something(&self) {
-            self.things_done.fetch_add(1, Ordering::SeqCst);
+    impl Counter for AtomicCounter {
+        fn increment(&self) {
+            self.count.fetch_add(1, Ordering::SeqCst);
         }
     }
 
-    let something = Something::default();
-    assert_eq!(something.things_done.load(Ordering::SeqCst), 0);
-    something.do_something();
-    assert_eq!(something.things_done.load(Ordering::SeqCst), 1);
+    struct CounterWrapper<C: Counter> {
+        inner: C,
+    }
 
-    let boxed = Box::new(something);
-    boxed.do_something();
-    assert_eq!(boxed.things_done.load(Ordering::SeqCst), 2);
+    impl<C: Counter> From<C> for CounterWrapper<C> {
+        fn from(inner: C) -> Self {
+            Self { inner }
+        }
+    }
+
+    // counter wrapper should be able to wrap AtomicCounter
+    let counter = AtomicCounter::default();
+    let wrapper_by_value = CounterWrapper::from(counter);
+    assert_eq!(wrapper_by_value.inner.count.load(Ordering::Relaxed), 0);
+    wrapper_by_value.inner.increment();
+    assert_eq!(wrapper_by_value.inner.count.load(Ordering::Relaxed), 1);
+
+    // and since we derived it, it should be able to wrap &mut AtomicCounter too
+    let counter = AtomicCounter::default();
+    let wrapper_by_box = CounterWrapper::from(Box::new(counter));
+    assert_eq!(wrapper_by_box.inner.count.load(Ordering::Relaxed), 0);
+    wrapper_by_box.inner.increment();
+    assert_eq!(wrapper_by_box.inner.count.load(Ordering::Relaxed), 1);
 }
 
 #[test]
-fn test_trait_mut() {
+fn test_receiver_mut() {
     #[blanket(derive(Box))]
-    pub trait MyTraitMut {
-        fn do_something_else(&mut self);
+    pub trait Counter {
+        fn increment(&mut self);
     }
 
     #[derive(Default)]
-    struct Something {
-        other_things_done: usize,
+    struct AtomicCounter {
+        count: u8,
     }
 
-    impl MyTraitMut for Something {
-        fn do_something_else(&mut self) {
-            self.other_things_done += 1;
+    impl Counter for AtomicCounter {
+        fn increment(&mut self) {
+            self.count += 1;
         }
     }
 
-    let mut something = Something::default();
-    assert_eq!(something.other_things_done, 0);
-    something.do_something_else();
-    assert_eq!(something.other_things_done, 1);
+    struct CounterWrapper<C: Counter> {
+        inner: C,
+    }
 
-    let mut boxed = Box::new(something);
-    boxed.do_something_else();
-    assert_eq!(boxed.other_things_done, 2);
+    impl<C: Counter> From<C> for CounterWrapper<C> {
+        fn from(inner: C) -> Self {
+            Self { inner }
+        }
+    }
+
+    // counter wrapper should be able to wrap AtomicCounter
+    let counter = AtomicCounter::default();
+    let mut wrapper_by_value = CounterWrapper::from(counter);
+    assert_eq!(wrapper_by_value.inner.count, 0);
+    wrapper_by_value.inner.increment();
+    assert_eq!(wrapper_by_value.inner.count, 1);
+
+    // and since we derived it, it should be able to wrap &mut AtomicCounter too
+    let counter = AtomicCounter::default();
+    let mut wrapper_by_box = CounterWrapper::from(Box::new(counter));
+    assert_eq!(wrapper_by_box.inner.count, 0);
+    wrapper_by_box.inner.increment();
+    assert_eq!(wrapper_by_box.inner.count, 1);
 }
 
 #[test]
-fn test_trait_mix() {
+fn test_receiver_mix() {
     #[blanket(derive(Box))]
-    pub trait MyTraitMix {
-        fn do_something(&self);
-        fn do_something_else(&mut self);
+    pub trait Counter {
+        fn increment(&mut self);
+        fn decrement(&self);
     }
 
     #[derive(Default)]
-    struct Something {
-        things_done: AtomicU8,
-        other_things_done: usize,
+    struct AtomicCounter {
+        count: AtomicU8,
     }
 
-    impl MyTraitMix for Something {
-        fn do_something(&self) {
-            self.things_done.fetch_add(1, Ordering::SeqCst);
+    impl Counter for AtomicCounter {
+        fn increment(&mut self) {
+            self.count.fetch_add(1, Ordering::SeqCst);
         }
-        fn do_something_else(&mut self) {
-            self.other_things_done += 1;
+        fn decrement(&self) {
+            self.count.fetch_sub(1, Ordering::SeqCst);
         }
     }
 
-    let mut something = Something::default();
-    assert_eq!(something.things_done.load(Ordering::SeqCst), 0);
-    something.do_something();
-    assert_eq!(something.things_done.load(Ordering::SeqCst), 1);
-    assert_eq!(something.other_things_done, 0);
-    something.do_something_else();
-    assert_eq!(something.other_things_done, 1);
+    struct CounterWrapper<C: Counter> {
+        inner: C,
+    }
 
-    let mut boxed = Box::new(something);
-    boxed.do_something();
-    assert_eq!(boxed.things_done.load(Ordering::SeqCst), 2);
-    boxed.do_something_else();
-    assert_eq!(boxed.other_things_done, 2);
+    impl<C: Counter> From<C> for CounterWrapper<C> {
+        fn from(inner: C) -> Self {
+            Self { inner }
+        }
+    }
+
+    // counter wrapper should be able to wrap AtomicCounter
+    let counter = AtomicCounter::default();
+    let mut wrapper_by_value = CounterWrapper::from(counter);
+    assert_eq!(wrapper_by_value.inner.count.load(Ordering::Relaxed), 0);
+    wrapper_by_value.inner.increment();
+    wrapper_by_value.inner.increment();
+    assert_eq!(wrapper_by_value.inner.count.load(Ordering::Relaxed), 2);
+    wrapper_by_value.inner.decrement();
+    assert_eq!(wrapper_by_value.inner.count.load(Ordering::Relaxed), 1);
+
+    // and since we derived it, it should be able to wrap &mut AtomicCounter too
+    let counter = AtomicCounter::default();
+    let mut wrapper_by_box = CounterWrapper::from(Box::new(counter));
+    assert_eq!(wrapper_by_box.inner.count.load(Ordering::Relaxed), 0);
+    wrapper_by_box.inner.increment();
+    wrapper_by_box.inner.increment();
+    assert_eq!(wrapper_by_box.inner.count.load(Ordering::Relaxed), 2);
+    wrapper_by_box.inner.decrement();
+    assert_eq!(wrapper_by_box.inner.count.load(Ordering::Relaxed), 1);
+}
+
+#[test]
+fn test_trait_own() {
+    #[blanket(derive(Box))]
+    pub trait StringBuilder {
+        fn build(self) -> String;
+    }
+
+    #[derive(Default)]
+    struct Concat {
+        strings: Vec<String>,
+    }
+
+    impl StringBuilder for Concat {
+        fn build(self) -> String {
+            self.strings.join("")
+        }
+    }
+
+    struct StringBuilderWrapper<B: StringBuilder> {
+        inner: B,
+    };
+
+    impl<B: StringBuilder> From<B> for StringBuilderWrapper<B> {
+        fn from(inner: B) -> Self {
+            StringBuilderWrapper { inner }
+        }
+    }
+
+    let mut concat = Concat::default();
+    concat.strings.push(String::from("Hello "));
+    concat.strings.push(String::from("World!"));
+    let wrapper = StringBuilderWrapper::from(concat);
+    assert_eq!(wrapper.inner.build(), String::from("Hello World!"));
+
+    let mut concat = Concat::default();
+    concat.strings.push(String::from("Hello "));
+    concat.strings.push(String::from("World!"));
+    let wrapper = StringBuilderWrapper::from(Box::new(concat));
+    assert_eq!(wrapper.inner.build(), String::from("Hello World!"));
+}
+
+#[test]
+#[cfg(not(tarpaulin))]
+fn test_failures() {
+    #[cfg(not(tarpaulin))]
+    let t = trybuild::TestCases::new();
+    // check that the same test case but without a derive does not work
+    t.compile_fail(file!().replace("mod.rs", "fails/noderive.rs"));
 }

@@ -31,9 +31,9 @@ fn main() {
     wrapper_by_value.inner.increment();
     assert_eq!(wrapper_by_value.inner.count, 1);
     // but this will fail because no implementation was derived
-    let mut counter = AtomicCounter::default();
-    let wrapper_by_ref = CounterWrapper::from(&mut counter);
-    assert_eq!(wrapper_by_ref.inner.count, 0);
-    wrapper_by_ref.inner.increment();
-    assert_eq!(wrapper_by_ref.inner.count, 1);
+    let counter = AtomicCounter::default();
+    let mut wrapper_by_box = CounterWrapper::from(Box::new(counter));
+    assert_eq!(wrapper_by_box.inner.count, 0);
+    wrapper_by_box.inner.increment();
+    assert_eq!(wrapper_by_box.inner.count, 1);
 }
