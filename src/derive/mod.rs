@@ -1,10 +1,12 @@
 mod r#box;
+mod r#mut;
 mod r#ref;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Derive {
     Box,
     Ref,
+    Mut,
 }
 
 impl Derive {
@@ -12,6 +14,7 @@ impl Derive {
         match s {
             "Box" => Some(Derive::Box),
             "Ref" => Some(Derive::Ref),
+            "Mut" => Some(Derive::Mut),
             _ => None,
         }
     }
@@ -26,6 +29,7 @@ impl Derive {
         match self {
             Derive::Box => self::r#box::derive(trait_),
             Derive::Ref => self::r#ref::derive(trait_),
+            Derive::Mut => self::r#mut::derive(trait_),
         }
     }
 }

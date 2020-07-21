@@ -12,10 +12,6 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
         if let syn::TraitItem::Method(ref m) = item {
             if let Some(receiver) = m.sig.receiver() {
                 match receiver {
-                    syn::FnArg::Receiver(r) if r.mutability.is_some() => {
-                        let msg = "cannot derive `Ref` for a trait declaring `&mut self` methods";
-                        return Err(syn::Error::new(r.span(), msg));
-                    }
                     syn::FnArg::Receiver(r) if r.reference.is_none() => {
                         let msg = "cannot derive `Ref` for a trait declaring `self` methods";
                         return Err(syn::Error::new(r.span(), msg));
@@ -39,7 +35,7 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
 
     Ok(parse_quote!(
         #[automatically_derived]
-        impl<B: #name + ?Sized> #name for &B {
+        impl<B: #name + ?Sized> #name for &mut B {
             #(#methods)*
         }
     ))
@@ -61,7 +57,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<B: MyTrait + ?Sized> MyTrait for &B {}
+                    impl<B: MyTrait + ?Sized> MyTrait for &mut B {}
                 )
             );
         }
