@@ -16,13 +16,25 @@
 The Rust standard library has plenty of traits, but they shine in how well
 they integrate with new types. Declare an implementation of
 [`std::io::Write`](https://doc.rust-lang.org/std/io/trait.Write.html) for
-a type `T`, and you also get it for `&mut T` and `Box<T>`!
+a type `T`, and you also get it for `&mut T` and `Box<T>`! This however
+translates into a [lot of boilerplate code](https://doc.rust-lang.org/src/std/io/impls.rs.html#49-79)
+that can be hard to maintain, which is why many crates don't over the same
+convenience implementations.
 
-This crate helps you do the same with your own traits with as least boilerplate
+This is where `blanket` comes in! This crate helps you build the same kind
+of blanket implementations for your own traits with as least additional code
 as possible: in fact, this is as close as what a `derive` macro would look
 like for a `trait` item.
 
 ## 🔌 Usage
+
+`blanket` exports a single eponymous attribute macro, which can be imported
+simply after the crate has been added to the `Cargo.toml` dependencies:
+
+```rust
+extern crate blanket;
+use blanket::blanket;
+```
 
 ### `#[blanket(derive(...))]`
 
@@ -46,26 +58,42 @@ to provide a default behaviour as an external function, such as what
 
 The following example implements a very simple visitor trait for types
 able to process a `&str` char-by-char.
+
 ```rust,ignore
 extern crate blanket;
 use blanket::blanket;
 
 #[blanket(default = "visitor")]
 trait Visitor {
-    fn visit_string(&self, s: String);
+    fn visit_string(&self, s: &str);
     fn visit_char(&self, c: char);
 }
 
 mod visitor {
     use super::Visitor;
 
-    pub fn visit_string<V: Visitor + ?Sized>(v: &V, s: String) {
+    pub fn visit_string<V: Visitor + ?Sized>(v: &V, s: &str) {
         for c in s.chars() {
             v.visit_char(c);
         }
     }
 
     pub fn visit_char<V: Visitor + ?Sized>(v: &V, c: char) {}
+}
+```
+
+`blanket` will check that all methods are declared without a default block,
+and then create a default implementation for all of the declared methods,
+generating the following code:
+
+```rust,ignore
+trait Visitor {
+    fn visit_string(&self, s: &str) {
+      visitor::visit_string(self, s)
+    }
+    fn visit_char(&self, c: char) {
+      visitor::visit_char(self, c)
+    }
 }
 ```
 
