@@ -29,10 +29,11 @@ like for a `trait` item.
 Use this macro attribute to derive a blanket implementations for a trait. Some
 derives may require that the trait methods take `&self` or `&mut self` only.
 
-Given a trait `R` implemented by a type `T`, the following derives are supported:
+Given a trait `T`, the following derives are supported:
 
-- **`Box`**: implement `R` for `Box<T>`.
-
+- **`Box`**: implement `T` for any `Box<X>` where `X` implements `T`.
+- **`Ref`**: implement `T` for any `&X` where `X` implements `T`.
+  *This requires all trait methods to be declared as `fn (&self, ...)`*
 
 ### `#[blanket(default = "...")]`
 
