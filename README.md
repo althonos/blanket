@@ -46,6 +46,7 @@ The following derives are available:
 | Derive | Impl block                                 | `fn (&self)` | `fn (&mut self)` | `fn (self)` |
 |--------|--------------------------------------------|--------------|------------------|-------------|
 | Ref    | `impl<T: Trait + ?Sized> Trait for &T`     | ✔️            |                  |             |
+| Rc     | `impl<T: Trait + ?Sized> Trait for Rc<T>`  | ✔️            |                  |             |
 | Mut    | `impl<T: Trait + ?Sized> Trait for &mut T` | ✔️            | ✔️                |             |
 | Box    | `impl<T: Trait> Trait for Box<T>`          | ✔️            | ✔️                | ✔️           |
 
@@ -90,7 +91,7 @@ to provide a default behaviour as an external function, such as what
 The following example implements a very simple visitor trait for types
 able to process a `&str` char-by-char.
 
-```rust,ignore
+```rust
 extern crate blanket;
 use blanket::blanket;
 
@@ -117,7 +118,7 @@ mod visitor {
 and then create a default implementation for all of the declared methods,
 generating the following code:
 
-```rust,ignore
+```rust
 trait Visitor {
     fn visit_string(&self, s: &str) {
       visitor::visit_string(self, s)
@@ -131,12 +132,12 @@ trait Visitor {
 ## ✒️ To-Do
 
 - ✔️ Delegation of default method to external functions.
+- ✔️ Support for traits with generic arguments.
 - ✔️ `#[derive(Ref)]`
 - ✔️ `#[derive(Mut)]`
 - ✔️ `#[derive(Box)]`
+- ✔️ `#[derive(Rc)]`
 - ❌ Update `Box` to allow unsized types if possible.
-- ❌ Support for traits with generic arguments.
-- ❌ `#[derive(Rc)]`
 - ❌ `#[derive(Arc)]`
 
 ## 📋 Changelog

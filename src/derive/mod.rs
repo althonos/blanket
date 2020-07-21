@@ -1,5 +1,6 @@
 mod r#box;
 mod r#mut;
+mod rc;
 mod r#ref;
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -7,6 +8,7 @@ pub enum Derive {
     Box,
     Ref,
     Mut,
+    Rc,
 }
 
 impl Derive {
@@ -15,6 +17,7 @@ impl Derive {
             "Box" => Some(Derive::Box),
             "Ref" => Some(Derive::Ref),
             "Mut" => Some(Derive::Mut),
+            "Rc" => Some(Derive::Rc),
             _ => None,
         }
     }
@@ -30,6 +33,7 @@ impl Derive {
             Derive::Box => self::r#box::derive(trait_),
             Derive::Ref => self::r#ref::derive(trait_),
             Derive::Mut => self::r#mut::derive(trait_),
+            Derive::Rc => self::rc::derive(trait_),
         }
     }
 }

@@ -1,0 +1,5 @@
+error: cannot derive `Rc` for a trait declaring `&mut self` methods
+ --> $DIR/mutmethods.rs:7:18
+  |
+7 |     fn increment(&mut self);
+  |                  ^^^^^^^^^

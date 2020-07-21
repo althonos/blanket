@@ -1,0 +1,5 @@
+error: cannot derive `Rc` for a trait declaring `self` methods
+ --> $DIR/selfmethods.rs:7:16
+  |
+7 |     fn extract(self);
+  |                ^^^^

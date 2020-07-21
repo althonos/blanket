@@ -1,0 +1,17 @@
+error[E0277]: the trait bound `std::rc::Rc<AtomicCounter>: Counter` is not satisfied
+  --> $DIR/noderive.rs:36:47
+   |
+20 | struct CounterWrapper<C: Counter> {
+   |                          ------- required by this bound in `CounterWrapper`
+...
+36 |     let wrapper_by_ref = CounterWrapper::from(Rc::new(counter));
+   |                                               ^^^^^^^^^^^^^^^^ the trait `Counter` is not implemented for `std::rc::Rc<AtomicCounter>`
+
+error[E0277]: the trait bound `std::rc::Rc<AtomicCounter>: Counter` is not satisfied
+  --> $DIR/noderive.rs:36:26
+   |
+20 | struct CounterWrapper<C: Counter> {
+   |                          ------- required by this bound in `CounterWrapper`
+...
+36 |     let wrapper_by_ref = CounterWrapper::from(Rc::new(counter));
+   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Counter` is not implemented for `std::rc::Rc<AtomicCounter>`
