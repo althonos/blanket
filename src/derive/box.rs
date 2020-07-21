@@ -4,7 +4,6 @@ use crate::utils::deref_expr;
 use crate::utils::signature_to_method_call;
 
 pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
-
     let name = &trait_.ident;
     let mut methods: Vec<syn::ImplItemMethod> = Vec::new();
 
@@ -26,7 +25,6 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
     ))
 }
 
-
 #[cfg(test)]
 mod tests {
     mod derive {
@@ -35,7 +33,9 @@ mod tests {
 
         #[test]
         fn empty() {
-            let trait_ = parse_quote!(trait MyTrait {});
+            let trait_ = parse_quote!(
+                trait MyTrait {}
+            );
             let derived = super::super::derive(&trait_).unwrap();
             assert_eq!(
                 derived,

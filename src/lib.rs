@@ -47,7 +47,10 @@ impl Args {
                             if let Some(d) = derive::Derive::from_path(&path) {
                                 derives.insert(d);
                             } else {
-                                return Err(syn::Error::new(path.span(), "unknown blanket derive option"));
+                                return Err(syn::Error::new(
+                                    path.span(),
+                                    "unknown blanket derive option",
+                                ));
                             }
                         } else {
                             return Err(syn::Error::new(elem.span(), "expected identifier"));
@@ -78,10 +81,7 @@ impl Args {
             }
         }
 
-        Ok(Self {
-            default,
-            derives,
-        })
+        Ok(Self { default, derives })
     }
 }
 
@@ -111,8 +111,8 @@ pub fn blanket(
         None => out.extend(quote!(#trait_)),
         Some(d) => match default::defer_trait_methods(trait_.clone(), d) {
             Ok(trait_) => out.extend(quote!(#trait_)),
-            Err(err) => out.extend(err.to_compile_error())
-        }
+            Err(err) => out.extend(err.to_compile_error()),
+        },
     };
     // add derived implementations
     for d in args.derives {

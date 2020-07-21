@@ -1,10 +1,13 @@
 use syn::spanned::Spanned;
 
-use super::utils::signature_to_function_call;
 use super::utils::prepend_function_path;
+use super::utils::signature_to_function_call;
 
 /// Update the method declarations of `trait_` to use default implementation from `default` module.
-pub fn defer_trait_methods(mut trait_: syn::ItemTrait, default: syn::Path) -> syn::Result<syn::ItemTrait> {
+pub fn defer_trait_methods(
+    mut trait_: syn::ItemTrait,
+    default: syn::Path,
+) -> syn::Result<syn::ItemTrait> {
     for item in trait_.items.iter_mut() {
         if let syn::TraitItem::Method(ref mut m) = item {
             // check no default implementation was provided for the current

@@ -9,7 +9,7 @@ pub fn signature_to_function_call(sig: &syn::Signature) -> syn::Result<syn::Expr
     let funcexpr = syn::ExprPath {
         attrs: Vec::new(),
         qself: None,
-        path: sig.ident.clone().into()
+        path: sig.ident.clone().into(),
     };
 
     // Extract arguments from the method signature names
@@ -25,7 +25,7 @@ pub fn signature_to_function_call(sig: &syn::Signature) -> syn::Result<syn::Expr
                     let argpath = syn::ExprPath {
                         attrs: Vec::new(),
                         qself: None,
-                        path: id.ident.clone().into()
+                        path: id.ident.clone().into(),
                     };
                     funcargs.push(syn::Expr::Path(argpath));
                 } else {
@@ -38,7 +38,9 @@ pub fn signature_to_function_call(sig: &syn::Signature) -> syn::Result<syn::Expr
     // Return the function call as an expression
     Ok(syn::ExprCall {
         attrs: Vec::new(),
-        paren_token: syn::token::Paren { span: funcexpr.span() },
+        paren_token: syn::token::Paren {
+            span: funcexpr.span(),
+        },
         func: Box::new(funcexpr.into()),
         args: funcargs,
     })
@@ -60,7 +62,7 @@ pub fn signature_to_method_call(sig: &syn::Signature) -> syn::Result<syn::ExprMe
                     let argpath = syn::ExprPath {
                         attrs: Vec::new(),
                         qself: None,
-                        path: id.ident.clone().into()
+                        path: id.ident.clone().into(),
                     };
                     funcargs.push(syn::Expr::Path(argpath));
                 } else {
@@ -74,7 +76,9 @@ pub fn signature_to_method_call(sig: &syn::Signature) -> syn::Result<syn::ExprMe
     Ok(syn::ExprMethodCall {
         attrs: Vec::new(),
         receiver: Box::new(syn::parse2(quote_spanned!(span=> self))?),
-        dot_token: syn::token::Dot { spans: [sig.span()] },
+        dot_token: syn::token::Dot {
+            spans: [sig.span()],
+        },
         method: sig.ident.clone(),
         turbofish: None,
         paren_token: syn::token::Paren { span: sig.span() },
@@ -99,13 +103,11 @@ pub fn deref_expr(expr: syn::Expr) -> syn::Expr {
     syn::Expr::Paren(syn::ExprParen {
         attrs: Vec::new(),
         paren_token: syn::token::Paren { span: expr.span() },
-        expr: Box::new(
-            syn::Expr::Unary(syn::ExprUnary {
-                attrs: Vec::new(),
-                op: syn::UnOp::Deref(parse_quote!(*)),
-                expr: Box::new(expr)
-            })
-        )
+        expr: Box::new(syn::Expr::Unary(syn::ExprUnary {
+            attrs: Vec::new(),
+            op: syn::UnOp::Deref(parse_quote!(*)),
+            expr: Box::new(expr),
+        })),
     })
 }
 

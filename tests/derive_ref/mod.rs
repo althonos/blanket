@@ -8,7 +8,6 @@ use blanket::blanket;
 
 #[test]
 fn test_derive() {
-
     #[blanket(derive(Ref))]
     pub trait Counter {
         fn increment(&self);
@@ -16,7 +15,7 @@ fn test_derive() {
 
     #[derive(Default)]
     struct AtomicCounter {
-        count: AtomicU8
+        count: AtomicU8,
     }
 
     impl Counter for AtomicCounter {
@@ -26,7 +25,7 @@ fn test_derive() {
     }
 
     struct CounterWrapper<C: Counter> {
-        inner: C
+        inner: C,
     }
 
     impl<C: Counter> From<C> for CounterWrapper<C> {
@@ -58,11 +57,11 @@ fn test_failures() {
     #[cfg(not(tarpaulin))]
     let t = trybuild::TestCases::new();
     // check that the same test case but without a derive does not work
-    t.compile_fail( file!().replace("mod.rs", "fails/noderive.rs") );
+    t.compile_fail(file!().replace("mod.rs", "fails/noderive.rs"));
     // check that deriving fails if the input trait declares mutable methods
-    t.compile_fail( file!().replace("mod.rs", "fails/mutmethods.rs") );
+    t.compile_fail(file!().replace("mod.rs", "fails/mutmethods.rs"));
     // check that deriving fails if the input trait declares methods taking ownership
-    t.compile_fail( file!().replace("mod.rs", "fails/selfmethods.rs") );
+    t.compile_fail(file!().replace("mod.rs", "fails/selfmethods.rs"));
     // check that deriving fails if the input trait declares methods with exotic receivers
-    t.compile_fail( file!().replace("mod.rs", "fails/boxmethods.rs") );
+    t.compile_fail(file!().replace("mod.rs", "fails/boxmethods.rs"));
 }

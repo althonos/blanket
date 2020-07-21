@@ -12,14 +12,14 @@ impl Derive {
         match s {
             "Box" => Some(Derive::Box),
             "Ref" => Some(Derive::Ref),
-            _ => None
+            _ => None,
         }
     }
 
     pub fn from_path(p: &syn::Path) -> Option<Self> {
         p.segments
             .first()
-            .and_then(|s| Self::from_str(&s.ident.to_string()) )
+            .and_then(|s| Self::from_str(&s.ident.to_string()))
     }
 
     pub fn defer_trait_methods(&self, trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {

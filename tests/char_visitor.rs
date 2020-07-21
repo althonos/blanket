@@ -23,10 +23,9 @@ pub mod visitor {
 
 #[test]
 fn test_default() {
-
     #[derive(Default)]
     struct CharCounter {
-        count: usize
+        count: usize,
     }
 
     impl Visitor for CharCounter {
@@ -44,7 +43,6 @@ fn test_default() {
 
 #[test]
 fn test_overload() {
-
     #[derive(Default)]
     struct CharBytesCounter {
         count: usize,
@@ -65,6 +63,9 @@ fn test_overload() {
     let string = String::from("Hello, 🌍!");
     counter.visit_str(&string);
 
-    assert_eq!(counter.count, string.chars().enumerate().last().unwrap().0 + 1);
+    assert_eq!(
+        counter.count,
+        string.chars().enumerate().last().unwrap().0 + 1
+    );
     assert_eq!(counter.bytes, string.as_bytes().len());
 }

@@ -7,7 +7,6 @@ use blanket::blanket;
 
 #[test]
 fn test_trait() {
-
     #[blanket(derive(Box))]
     pub trait MyTrait {
         fn do_something(&self);
@@ -15,7 +14,7 @@ fn test_trait() {
 
     #[derive(Default)]
     struct Something {
-        things_done: AtomicU8
+        things_done: AtomicU8,
     }
 
     impl MyTrait for Something {
@@ -43,7 +42,7 @@ fn test_trait_mut() {
 
     #[derive(Default)]
     struct Something {
-        other_things_done: usize
+        other_things_done: usize,
     }
 
     impl MyTraitMut for Something {
@@ -71,9 +70,9 @@ fn test_trait_mix() {
     }
 
     #[derive(Default)]
-    struct Something{
+    struct Something {
         things_done: AtomicU8,
-        other_things_done: usize
+        other_things_done: usize,
     }
 
     impl MyTraitMix for Something {
