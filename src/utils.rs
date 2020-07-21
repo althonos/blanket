@@ -1,4 +1,5 @@
 use quote::quote_spanned;
+use syn::parse_quote;
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 
@@ -90,4 +91,19 @@ pub fn prepend_function_path(call: &mut syn::ExprCall, module: syn::Path) -> syn
     } else {
         Err(syn::Error::new(call.func.span(), "expected path"))
     }
+}
+
+/// Deref an expression and wrap it in brackets to preserve operation priority.
+pub fn deref_expr(expr: syn::Expr) -> syn::Expr {
+    syn::Expr::Paren(syn::ExprParen {
+        attrs: Vec::new(),
+        paren_token: syn::token::Paren { span: expr.span() },
+        expr: Box::new(
+            syn::Expr::Unary(syn::ExprUnary {
+                attrs: Vec::new(),
+                op: syn::UnOp::Deref(parse_quote!(*)),
+                expr: Box::new(expr)
+            })
+        )
+    })
 }

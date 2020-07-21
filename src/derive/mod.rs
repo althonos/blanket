@@ -1,3 +1,4 @@
+
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Derive {
     Box,
@@ -12,7 +13,6 @@ impl Derive {
             _ => None
         }
     }
-
     pub fn from_path(p: &syn::Path) -> Option<Self> {
         p.segments
             .first()
@@ -32,6 +32,9 @@ mod r#box {
 
     use syn::parse_quote;
 
+    use crate::utils::deref_expr;
+    use crate::utils::signature_to_method_call;
+
     pub fn defer_trait_methods(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
 
         let name = &trait_.ident;
@@ -40,7 +43,8 @@ mod r#box {
         for item in trait_.items.iter() {
             if let syn::TraitItem::Method(ref m) = item {
                 let signature = &m.sig;
-                let call = crate::utils::signature_to_method_call(&m.sig)?;
+                let mut call = signature_to_method_call(&m.sig)?;
+                call.receiver = Box::new(deref_expr(deref_expr(*call.receiver)));
                 let item = parse_quote!(#signature { #call });
                 methods.push(item)
             }
