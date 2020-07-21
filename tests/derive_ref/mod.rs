@@ -6,34 +6,35 @@ use std::sync::atomic::Ordering;
 
 use blanket::blanket;
 
-#[blanket(derive(Ref))]
-pub trait Counter {
-    fn increment(&self);
-}
-
-#[derive(Default)]
-struct AtomicCounter {
-    count: AtomicU8
-}
-
-impl Counter for AtomicCounter {
-    fn increment(&self) {
-        self.count.fetch_add(1, Ordering::SeqCst);
-    }
-}
-
-struct CounterWrapper<C: Counter> {
-    inner: C
-}
-
-impl<C: Counter> From<C> for CounterWrapper<C> {
-    fn from(inner: C) -> Self {
-        Self { inner }
-    }
-}
-
 #[test]
 fn test_derive() {
+
+    #[blanket(derive(Ref))]
+    pub trait Counter {
+        fn increment(&self);
+    }
+
+    #[derive(Default)]
+    struct AtomicCounter {
+        count: AtomicU8
+    }
+
+    impl Counter for AtomicCounter {
+        fn increment(&self) {
+            self.count.fetch_add(1, Ordering::SeqCst);
+        }
+    }
+
+    struct CounterWrapper<C: Counter> {
+        inner: C
+    }
+
+    impl<C: Counter> From<C> for CounterWrapper<C> {
+        fn from(inner: C) -> Self {
+            Self { inner }
+        }
+    }
+
     // counter wrapper should be able to wrap AtomicCounter
     let counter = AtomicCounter::default();
     let wrapper_by_value = CounterWrapper::from(counter);
@@ -52,7 +53,14 @@ fn test_derive() {
 }
 
 #[test]
-fn test_no_derive() {
+fn test_failures() {
     let t = trybuild::TestCases::new();
-    t.compile_fail( file!().replace("mod.rs", "fail.rs") );
+    // check that the same test case but without a derive does not work
+    t.compile_fail( file!().replace("mod.rs", "fails/noderive.rs") );
+    // check that deriving fails if the input trait declares mutable methods
+    t.compile_fail( file!().replace("mod.rs", "fails/mutmethods.rs") );
+    // check that deriving fails if the input trait declares methods taking ownership
+    t.compile_fail( file!().replace("mod.rs", "fails/selfmethods.rs") );
+    // check that deriving fails if the input trait declares methods with exotic receivers
+    t.compile_fail( file!().replace("mod.rs", "fails/boxmethods.rs") );
 }

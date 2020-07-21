@@ -1,5 +1,5 @@
 error[E0277]: the trait bound `&AtomicCounter: Counter` is not satisfied
-  --> $DIR/fail.rs:35:47
+  --> $DIR/noderive.rs:35:47
    |
 19 | struct CounterWrapper<C: Counter> {
    |                          ------- required by this bound in `CounterWrapper`
@@ -14,7 +14,7 @@ error[E0277]: the trait bound `&AtomicCounter: Counter` is not satisfied
              <AtomicCounter as Counter>
 
 error[E0277]: the trait bound `&AtomicCounter: Counter` is not satisfied
-  --> $DIR/fail.rs:35:26
+  --> $DIR/noderive.rs:35:26
    |
 19 | struct CounterWrapper<C: Counter> {
    |                          ------- required by this bound in `CounterWrapper`
