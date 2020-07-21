@@ -1,0 +1,28 @@
+[package]
+name = "blanket"
+version = "0.1.0"
+authors = ["Martin Larralde <martin.larralde@ens-paris-saclay.fr>"]
+edition = "2018"
+
+[package.metadata.docs.rs]
+features = [ "_doc" ]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+darling = "0.10"
+quote = "1.0"
+proc-macro2 = "1.0"
+strum = "0.18"
+
+[dependencies.syn]
+version = "1.0"
+features = ["full"]
+
+[dev-dependencies]
+trybuild = "1.0"
+
+
+[features]
+_doc = []

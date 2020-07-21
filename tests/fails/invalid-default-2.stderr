@@ -1,0 +1,5 @@
+error: expected module identifier
+ --> $DIR/invalid-default-2.rs:4:21
+  |
+4 | #[blanket(default = "a b")]
+  |                     ^^^^^

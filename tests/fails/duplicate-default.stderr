@@ -1,0 +1,5 @@
+error: duplicate default module given
+ --> $DIR/duplicate-default.rs:4:42
+  |
+4 | #[blanket(default = "default", default = "other")]
+  |                                          ^^^^^^^

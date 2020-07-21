@@ -1,0 +1,5 @@
+error: method should not have default implementation if using #[blanket(default = "...")]
+ --> $DIR/default-with-default.rs:6:5
+  |
+6 |     fn method() {}
+  |     ^^^^^^^^^^^^^^

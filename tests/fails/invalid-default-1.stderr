@@ -1,0 +1,5 @@
+error: expected string literal
+ --> $DIR/invalid-default-1.rs:4:21
+  |
+4 | #[blanket(default = 1)]
+  |                     ^
