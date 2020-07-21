@@ -5,9 +5,24 @@ authors = ["Martin Larralde <martin.larralde@embl.de>"]
 edition = "2018"
 license = "MIT"
 description = "A simple macro to derive blanket implementations for your traits."
+repository = "https://github.com/althonos/blanket"
+homepage = "https://github.com/althonos/blanket"
+readme = "README.md"
+keywords = ["proc-macro", "attribute", "blanket", "trait", "impl"]
+categories = ["development-tools", "rust-patterns"]
 
 [package.metadata.docs.rs]
 features = [ "_doc" ]
+
+[badges.travis-ci]
+repository = "althonos/blanket"
+[badges.codecov]
+repository = "althonos/blanket"
+service    = "github"
+[badges.is-it-maintained-issue-resolution]
+repository = "althonos/blanket"
+[badges.maintenance]
+status     = "actively-developed"
 
 [lib]
 proc-macro = true
@@ -17,7 +32,6 @@ darling = "0.10"
 quote = "1.0"
 proc-macro2 = "1.0"
 strum = "0.18"
-
 [dependencies.syn]
 version = "1.0"
 features = ["full"]
@@ -27,7 +41,6 @@ trybuild = "1.0"
 
 [features]
 _doc = []
-
 
 [[test]]
 name = "derive_ref"

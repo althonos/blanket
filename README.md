@@ -98,6 +98,12 @@ trait Visitor {
 }
 ```
 
+## ✒️ To-Do
+
+- [ ] Add support for traits with generic arguments.
+- [ ] Add support for `#[derive(Rc)]`
+- [ ] Add support for `#[derive(Arc)]`
+
 ## 📋 Changelog
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
