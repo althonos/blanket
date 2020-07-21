@@ -41,12 +41,13 @@ use blanket::blanket;
 Use this macro attribute to derive a blanket implementation for a trait,
 provided the trait methods fit the constraints for that derive, such as
 only declaring methods with `&self` of `&mut self` as their receiver.
+The following derives are available:
 
-Given a trait `T`, the following derives are supported:
-
-- **`Box`**: implement `T` for any `Box<X>` where `X` implements `T`.
-- **`Ref`**: implement `T` for any `&X` where `X` implements `T`.
-  *This requires all trait methods to be declared as `fn (&self, ...)`*
+| Derive | Impl block                                 | `fn (&self)` | `fn (&mut self)` | `fn (self)` |
+|--------|--------------------------------------------|--------------|------------------|-------------|
+| Ref    | `impl<T: Trait + ?Sized> Trait for &T`     | ✔️            |                  |             |
+| Mut    | `impl<T: Trait + ?Sized> Trait for &mut T` | ✔️            | ✔️                |             |
+| Box    | `impl<T: Trait> Trait for Box<T>`          | ✔️            | ✔️                | ✔️           |
 
 ### `#[blanket(default = "...")]`
 
