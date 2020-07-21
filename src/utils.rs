@@ -108,3 +108,27 @@ pub fn deref_expr(expr: syn::Expr) -> syn::Expr {
         )
     })
 }
+
+#[cfg(test)]
+mod tests {
+
+    use syn::parse_quote;
+
+    #[test]
+    fn prepend_function_path() {
+        let path = parse_quote!(crate::qualified::path);
+        let mut call = parse_quote!(myfunction(arg1, arg2));
+        super::prepend_function_path(&mut call, path).unwrap();
+        assert_eq!(
+            call,
+            parse_quote!(crate::qualified::path::myfunction(arg1, arg2))
+        );
+    }
+
+    #[test]
+    fn deref_expr() {
+        let expr = parse_quote!(self);
+        let dereffed = super::deref_expr(expr);
+        assert_eq!(dereffed, parse_quote!((*self)));
+    }
+}
