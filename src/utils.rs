@@ -111,6 +111,33 @@ pub fn deref_expr(expr: syn::Expr) -> syn::Expr {
     })
 }
 
+/// Build a generic identifier suitable for the given trait.
+///
+/// This function extracts the initials of the trait identifier. If this results
+/// in a generic type identifier already present in the generics of that trait,
+/// as many underscores are added to the end of the identifier.
+pub fn trait_to_generic_ident(trait_: &syn::ItemTrait) -> syn::Ident {
+    let mut raw = trait_
+        .ident
+        .to_string()
+        .chars()
+        .filter(|c| c.is_uppercase())
+        .collect::<String>();
+    loop {
+        if !trait_.generics.params.iter().any(|g| match g {
+            syn::GenericParam::Type(param) if param.ident == raw => true,
+            syn::GenericParam::Const(param) if param.ident == raw => true,
+            _ => false,
+        }) {
+            break;
+        } else {
+            raw.push('_');
+        }
+    }
+
+    syn::Ident::new(&raw, trait_.ident.span())
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -132,5 +159,26 @@ mod tests {
         let expr = parse_quote!(self);
         let dereffed = super::deref_expr(expr);
         assert_eq!(dereffed, parse_quote!((*self)));
+    }
+
+    #[test]
+    fn trait_to_generic_ident() {
+        let trait_ = syn::parse_quote!(
+            trait Trait {}
+        );
+        let expected: syn::Ident = syn::parse_quote!(T);
+        assert_eq!(super::trait_to_generic_ident(&trait_), expected);
+
+        let trait_ = syn::parse_quote!(
+            trait SomeTrait {}
+        );
+        let expected: syn::Ident = syn::parse_quote!(ST);
+        assert_eq!(super::trait_to_generic_ident(&trait_), expected);
+
+        let trait_ = syn::parse_quote!(
+            trait Trait<T> {}
+        );
+        let expected: syn::Ident = syn::parse_quote!(T_);
+        assert_eq!(super::trait_to_generic_ident(&trait_), expected);
     }
 }
