@@ -53,7 +53,9 @@ fn test_derive() {
 }
 
 #[test]
+#[cfg(not(tarpaulin))]
 fn test_failures() {
+    #[cfg(not(tarpaulin))]
     let t = trybuild::TestCases::new();
     // check that the same test case but without a derive does not work
     t.compile_fail( file!().replace("mod.rs", "fails/noderive.rs") );
