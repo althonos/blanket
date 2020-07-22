@@ -11,7 +11,7 @@
 [![Changelog](https://img.shields.io/badge/keep%20a-changelog-8A0707.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/blanket.rs/blob/master/CHANGELOG.md)
 [![GitHub issues](https://img.shields.io/github/issues/althonos/blanket.svg?style=flat-square&maxAge=600)](https://github.com/althonos/blanket/issues)
 
-## 🗺️ Overview
+## 🔍 Overview
 
 The Rust standard library has plenty of traits, but they shine in how well
 they integrate with new types. Declare an implementation of
@@ -129,16 +129,16 @@ trait Visitor {
 }
 ```
 
-## ✒️ To-Do
+## 📝 To-Do
 
-- ✔️ Delegation of default method to external functions.
-- ✔️ Support for traits with generic arguments.
-- ✔️ `#[derive(Ref)]`
-- ✔️ `#[derive(Mut)]`
-- ✔️ `#[derive(Box)]`
-- ✔️ `#[derive(Rc)]`
-- ❌ Update `Box` to allow unsized types if possible.
-- ❌ `#[derive(Arc)]`
+- ✔ Delegation of default method to external functions.
+- ✔ Support for traits with generic arguments.
+- ✔ `#[derive(Ref)]`
+- ✔ `#[derive(Mut)]`
+- ✔ `#[derive(Box)]`
+- ✔ `#[derive(Rc)]`
+- ✘ Update `Box` to allow unsized types if possible.
+- ✘ `#[derive(Arc)]`
 
 ## 📋 Changelog
 
