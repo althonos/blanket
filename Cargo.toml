@@ -1,6 +1,6 @@
 [package]
 name = "blanket"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Martin Larralde <martin.larralde@embl.de>"]
 edition = "2018"
 license = "MIT"
@@ -41,7 +41,6 @@ impls = "1.0"
 static_assertions = "1.1"
 [dev-dependencies.syn]
 version = "1.0"
-default-features = false
 features = ["full", "extra-traits"]
 
 [features]

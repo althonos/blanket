@@ -7,7 +7,7 @@
 # only test without coverage in nightly since the span of diagnositcs is
 # currently not for the nightly and the other channels, most likely because
 # of `proc-macro2`
-if [ "$TRAVIS_RUST_VERSION" == "nightly" ]; then
+if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then
 	log Testing without measuring coverage
 	cargo test
 fi
@@ -16,7 +16,7 @@ fi
 # --- Test without coverage --------------------------------------------------
 
 log Testing with coverage
-cargo tarpaulin -v --out Xml --ciserver travis-ci
+cargo tarpaulin --lib -v --out Xml --ciserver travis-ci
 
 
 # --- Check code format ------------------------------------------------------
@@ -24,7 +24,7 @@ cargo tarpaulin -v --out Xml --ciserver travis-ci
 # only test without coverage in nightly since the span of diagnositcs is
 # currently not for the nightly and the other channels, most likely because
 # of `proc-macro2`
-if [ "$TRAVIS_RUST_VERSION" == "nightly" ]; then
+if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then
 	log Checking Rust code format with \`cargo fmt\`
 	cargo fmt -- --check
 fi

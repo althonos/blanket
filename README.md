@@ -15,11 +15,16 @@
 
 The Rust standard library has plenty of traits, but they shine in how well
 they integrate with new types. Declare an implementation of
-[`std::io::Write`](https://doc.rust-lang.org/std/io/trait.Write.html) for
-a type `T`, and you also get it for `&mut T` and `Box<T>`! This however
-translates into a [lot of boilerplate code](https://doc.rust-lang.org/src/std/io/impls.rs.html#49-79)
-that can be hard to maintain, which is why many crates don't over the same
-convenience implementations.
+[`std::io::Write`] for
+a type `W`, and you also get it for [`&mut W`] and [`Box<W>`]! This however
+translates into a [lot of boilerplate code]
+that can be hard to maintain, which is why many crates don't bother
+providing the same convenience implementations.
+
+[`std::io::Write`]: https://doc.rust-lang.org/std/io/trait.Write.html
+[lot of boilerplate code]: https://doc.rust-lang.org/src/std/io/impls.rs.html#49-79
+[`&mut W`]: https://doc.rust-lang.org/std/io/trait.Write.html#impl-Write-17
+[`Box<W>`]: https://doc.rust-lang.org/std/io/trait.Write.html#impl-Write-19
 
 This is where `blanket` comes in! This crate helps you build the same kind
 of blanket implementations for your own traits with as least additional code
@@ -131,14 +136,15 @@ trait Visitor {
 
 ## 📝 To-Do
 
-- ✔ Delegation of default method to external functions.
-- ✔ Support for traits with generic arguments.
-- ✔ `#[derive(Ref)]`
-- ✔ `#[derive(Mut)]`
-- ✔ `#[derive(Box)]`
-- ✔ `#[derive(Rc)]`
-- ✘ Update `Box` to allow unsized types if possible.
-- ✘ `#[derive(Arc)]`
+-Delegation of default method to external functions.
+-Support for traits with generic arguments.
+- ✓ `#[derive(Ref)]`
+- ✓ `#[derive(Mut)]`
+- ✓ `#[derive(Box)]`
+- ✓ `#[derive(Rc)]`
+- ✗ Update `Box` derive to allow unsized types if possible.
+- ✗ `#[derive(Arc)]`
+- ✗ `#[derive(Cow)]`
 
 ## 📋 Changelog
 
