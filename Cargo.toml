@@ -28,7 +28,6 @@ status     = "actively-developed"
 proc-macro = true
 
 [dependencies]
-darling = "0.10"
 quote = "1.0"
 proc-macro2 = "1.0"
 [dependencies.syn]
