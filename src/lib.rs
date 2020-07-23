@@ -8,8 +8,8 @@ extern crate quote;
 use std::collections::HashSet;
 
 use quote::quote;
+use quote::ToTokens;
 use syn::parse_macro_input;
-use syn::parse_quote;
 use syn::spanned::Spanned;
 
 // ---------------------------------------------------------------------------
@@ -39,8 +39,10 @@ impl Args {
             .collect::<syn::Result<Vec<&syn::Meta>>>()?;
 
         for arg in meta {
+            // argument paths are compared against their token stream serialization
+            // to avoid to compile `syn` with the `extra-traits` feature
             match arg {
-                syn::Meta::List(ref l) if l.path == parse_quote!(derive) => {
+                syn::Meta::List(ref l) if l.path.to_token_stream().to_string() == "derive" => {
                     for elem in l.nested.iter() {
                         if let syn::NestedMeta::Meta(syn::Meta::Path(path)) = elem {
                             if let Some(d) = derive::Derive::from_path(&path) {
@@ -56,7 +58,9 @@ impl Args {
                         }
                     }
                 }
-                syn::Meta::NameValue(ref n) if n.path == parse_quote!(default) => {
+                syn::Meta::NameValue(ref n)
+                    if n.path.to_token_stream().to_string() == "default" =>
+                {
                     if let syn::Lit::Str(ref s) = n.lit {
                         match syn::parse_str(&s.value()) {
                             Ok(path) if default.is_none() => {
