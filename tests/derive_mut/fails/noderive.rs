@@ -1,39 +1,22 @@
+extern crate impls;
+extern crate static_assertions;
+
+use impls::impls;
+use static_assertions::const_assert;
+
 pub trait Counter {
     fn increment(&mut self);
 }
 
-#[derive(Default)]
-struct AtomicCounter {
-    count: u8,
-}
+struct AtomicCounter(u8);
 
 impl Counter for AtomicCounter {
     fn increment(&mut self) {
-        self.count += 1;
-    }
-}
-
-struct CounterWrapper<C: Counter> {
-    inner: C,
-}
-
-impl<C: Counter> From<C> for CounterWrapper<C> {
-    fn from(inner: C) -> Self {
-        Self { inner }
+        self.0 += 1;
     }
 }
 
 fn main() {
-    // counter wrapper should be able to wrap AtomicCounter
-    let counter = AtomicCounter::default();
-    let mut wrapper_by_value = CounterWrapper::from(counter);
-    assert_eq!(wrapper_by_value.inner.count, 0);
-    wrapper_by_value.inner.increment();
-    assert_eq!(wrapper_by_value.inner.count, 1);
-    // but this will fail because no implementation was derived
-    let mut counter = AtomicCounter::default();
-    let wrapper_by_ref = CounterWrapper::from(&mut counter);
-    assert_eq!(wrapper_by_ref.inner.count, 0);
-    wrapper_by_ref.inner.increment();
-    assert_eq!(wrapper_by_ref.inner.count, 1);
+    const_assert!(impls!(AtomicCounter:      Counter));
+    const_assert!(impls!(&mut AtomicCounter: Counter));
 }

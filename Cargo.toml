@@ -36,6 +36,8 @@ features = ["full"]
 
 [dev-dependencies]
 trybuild = "1.0"
+impls = "1.0"
+static_assertions = "1.1"
 
 [features]
 default = []
@@ -44,12 +46,16 @@ _doc = []
 [[test]]
 name = "derive_box"
 path = "tests/derive_box/mod.rs"
+harness = false
 [[test]]
 name = "derive_mut"
 path = "tests/derive_mut/mod.rs"
+harness = false
 [[test]]
 name = "derive_rc"
 path = "tests/derive_rc/mod.rs"
+harness = false
 [[test]]
 name = "derive_ref"
 path = "tests/derive_ref/mod.rs"
+harness = false

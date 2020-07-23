@@ -1,26 +1,7 @@
-error[E0277]: the trait bound `&AtomicCounter: Counter` is not satisfied
-  --> $DIR/noderive.rs:35:47
+error[E0080]: evaluation of constant value failed
+  --> $DIR/noderive.rs:27:5
    |
-19 | struct CounterWrapper<C: Counter> {
-   |                          ------- required by this bound in `CounterWrapper`
-...
-35 |     let wrapper_by_ref = CounterWrapper::from(&counter);
-   |                                               -^^^^^^^
-   |                                               |
-   |                                               the trait `Counter` is not implemented for `&AtomicCounter`
-   |                                               help: consider removing the leading `&`-reference
+27 |     const_assert!(impls!(&AtomicCounter:     Counter));
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ attempt to compute `0_usize - 1_usize` which would overflow
    |
-   = help: the following implementations were found:
-             <AtomicCounter as Counter>
-
-error[E0277]: the trait bound `&AtomicCounter: Counter` is not satisfied
-  --> $DIR/noderive.rs:35:26
-   |
-19 | struct CounterWrapper<C: Counter> {
-   |                          ------- required by this bound in `CounterWrapper`
-...
-35 |     let wrapper_by_ref = CounterWrapper::from(&counter);
-   |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Counter` is not implemented for `&AtomicCounter`
-   |
-   = help: the following implementations were found:
-             <AtomicCounter as Counter>
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)

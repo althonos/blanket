@@ -1,20 +1,21 @@
+extern crate blanket;
 extern crate impls;
-extern crate static_assertions;
 
 use std::rc::Rc;
 use std::sync::atomic::AtomicU8;
 use std::sync::atomic::Ordering;
 
+use blanket::blanket;
 use impls::impls;
-use static_assertions::const_assert;
 
+#[blanket(derive(Rc))]
 pub trait Counter {
     fn increment(&self);
 }
 
 #[derive(Default)]
 struct AtomicCounter {
-    count: AtomicU8
+    count: AtomicU8,
 }
 
 impl Counter for AtomicCounter {
@@ -24,6 +25,6 @@ impl Counter for AtomicCounter {
 }
 
 fn main() {
-    const_assert!(impls!(AtomicCounter:      Counter));
-    const_assert!(impls!(Rc<AtomicCounter>:  Counter));
+    assert!(impls!(AtomicCounter:     Counter));
+    assert!(impls!(Rc<AtomicCounter>: Counter));
 }

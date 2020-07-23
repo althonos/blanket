@@ -1,5 +1,11 @@
+extern crate impls;
+extern crate static_assertions;
+
 use std::sync::atomic::AtomicU8;
 use std::sync::atomic::Ordering;
+
+use impls::impls;
+use static_assertions::const_assert;
 
 pub trait Counter {
     fn increment(&self);
@@ -16,21 +22,7 @@ impl Counter for AtomicCounter {
     }
 }
 
-struct CounterWrapper<C: Counter> {
-    inner: C
-}
-
-impl<C: Counter> From<C> for CounterWrapper<C> {
-    fn from(inner: C) -> Self {
-        Self { inner }
-    }
-}
-
 fn main() {
-    // counter wrapper should be able to wrap AtomicCounter
-    let counter = AtomicCounter::default();
-    let wrapper_by_value = CounterWrapper::from(counter);
-    // but this will fail because no implementation was derived
-    let counter = AtomicCounter::default();
-    let wrapper_by_ref = CounterWrapper::from(&counter);
+    const_assert!(impls!(AtomicCounter:      Counter));
+    const_assert!(impls!(&AtomicCounter:     Counter));
 }

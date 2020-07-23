@@ -1,17 +1,7 @@
-error[E0277]: the trait bound `std::boxed::Box<AtomicCounter>: Counter` is not satisfied
-  --> $DIR/noderive.rs:35:51
+error[E0080]: evaluation of constant value failed
+  --> $DIR/noderive.rs:21:5
    |
-16 | struct CounterWrapper<C: Counter> {
-   |                          ------- required by this bound in `CounterWrapper`
-...
-35 |     let mut wrapper_by_box = CounterWrapper::from(Box::new(counter));
-   |                                                   ^^^^^^^^^^^^^^^^^ the trait `Counter` is not implemented for `std::boxed::Box<AtomicCounter>`
-
-error[E0277]: the trait bound `std::boxed::Box<AtomicCounter>: Counter` is not satisfied
-  --> $DIR/noderive.rs:35:30
+21 |     const_assert!(impls!(Box<AtomicCounter>: Counter));
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ attempt to compute `0_usize - 1_usize` which would overflow
    |
-16 | struct CounterWrapper<C: Counter> {
-   |                          ------- required by this bound in `CounterWrapper`
-...
-35 |     let mut wrapper_by_box = CounterWrapper::from(Box::new(counter));
-   |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `Counter` is not implemented for `std::boxed::Box<AtomicCounter>`
+   = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)

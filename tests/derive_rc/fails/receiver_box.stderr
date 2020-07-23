@@ -1,5 +1,5 @@
 error: cannot derive `Rc` for a trait declaring methods with arbitrary receiver types
- --> $DIR/boxmethods.rs:7:18
+ --> $DIR/receiver_box.rs:7:18
   |
 7 |     fn increment(self: Box<Self>);
   |                  ^^^^^^^^^^^^^^^
