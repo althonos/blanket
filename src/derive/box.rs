@@ -45,6 +45,7 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
     // a generic type that implements the trait for which we provide the
     // blanket implementation
     let trait_generics = &trait_.generics;
+    let where_clause = &trait_.generics.where_clause;
     let mut impl_generics = trait_generics.clone();
     impl_generics.params.push(syn::GenericParam::Type(
         parse_quote!(#generic_type: #trait_ident #trait_generics),
@@ -53,7 +54,7 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
     // generate the impl block
     Ok(parse_quote!(
         #[automatically_derived]
-        impl #impl_generics #trait_ident #trait_generics for Box<#generic_type> {
+        impl #impl_generics #trait_ident #trait_generics for Box<#generic_type> #where_clause {
             #(#methods)*
         }
     ))
