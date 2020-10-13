@@ -136,8 +136,8 @@ trait Visitor {
 
 ## 📝 To-Do
 
--Delegation of default method to external functions.
--Support for traits with generic arguments.
+- ✓ Delegation of default method to external functions.
+- ✓ Support for traits with generic arguments.
 - ✓ `#[derive(Ref)]`
 - ✓ `#[derive(Mut)]`
 - ✓ `#[derive(Box)]`
