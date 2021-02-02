@@ -22,6 +22,11 @@ jobs:
         profile: minimal
         toolchain: ${{ matrix.rust-toolchain }}
         override: true
+    - name: Setup cache for cargo
+      uses: actions/cache@v2
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-${{ matrix.rust-toolchain }}
     - name: Check code
       uses: actions-rs/cargo@v1
       with:
