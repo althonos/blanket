@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/althonos/blanket/compare/v0.1.3...HEAD
+[Unreleased]: https://github.com/althonos/blanket/compare/v0.1.4...HEAD
+
+
+## [v0.1.4] - 2021-05-31
+
+[v0.1.4]: https://github.com/althonos/blanket/compare/v0.1.3...v0.1.4
+
+### Fixed
+- Generics being erroneously repeated when deriving a trait with 
+  bounded generic arguments ([#2](https://github.com/althonos/blanket/issues/2)).
 
 
 ## [v0.1.3] - 2020-10-13

@@ -23,5 +23,4 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: publish
-      env:
-        CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        args: --token ${{ secrets.CRATES_IO_TOKEN }}
