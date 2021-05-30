@@ -2,6 +2,8 @@ use quote::quote_spanned;
 use syn::parse_quote;
 use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
+use syn::GenericParam;
+use syn::Token;
 
 /// Convert a function signature to a function call with the same arguments.
 pub fn signature_to_function_call(sig: &syn::Signature) -> syn::Result<syn::ExprCall> {
@@ -136,6 +138,31 @@ pub fn trait_to_generic_ident(trait_: &syn::ItemTrait) -> syn::Ident {
     }
 
     syn::Ident::new(&raw, trait_.ident.span())
+}
+
+/// Convert a generic type declaration to a generic with the same arguments.
+///
+/// Given a generic section `<T: 'static + Send>`, get simply `<T>`.
+pub fn generics_declaration_to_generics(
+    generics: &Punctuated<GenericParam, Token![,]>,
+) -> Punctuated<GenericParam, Token![,]> {
+    generics
+        .iter()
+        .filter_map(|gen| match gen {
+            syn::GenericParam::Type(t) => Some(t),
+            syn::GenericParam::Lifetime(_) => None,
+            syn::GenericParam::Const(_) => None,
+        })
+        .map(|t| syn::TypeParam {
+            attrs: t.attrs.clone(),
+            ident: t.ident.clone(),
+            colon_token: None,
+            bounds: syn::punctuated::Punctuated::new(),
+            eq_token: None,
+            default: None,
+        })
+        .map(|t| syn::GenericParam::Type(t))
+        .collect::<_>()
 }
 
 #[cfg(test)]

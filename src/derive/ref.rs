@@ -2,6 +2,7 @@ use syn::parse_quote;
 use syn::spanned::Spanned;
 
 use crate::utils::deref_expr;
+use crate::utils::generics_declaration_to_generics;
 use crate::utils::signature_to_method_call;
 use crate::utils::trait_to_generic_ident;
 
@@ -48,13 +49,18 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
     let trait_generics = &trait_.generics;
     let where_clause = &trait_.generics.where_clause;
     let mut impl_generics = trait_generics.clone();
+
+    // we must however remove the generic type bounds, to avoid repeating them
+    let mut trait_generic_names = trait_generics.clone();
+    trait_generic_names.params = generics_declaration_to_generics(&trait_generics.params);
+
     impl_generics.params.push(syn::GenericParam::Type(
-        parse_quote!(#generic_type: #trait_ident #trait_generics + ?Sized),
+        parse_quote!(#generic_type: #trait_ident #trait_generic_names + ?Sized),
     ));
 
     Ok(parse_quote!(
         #[automatically_derived]
-        impl #impl_generics #trait_ident #trait_generics for &#generic_type #where_clause {
+        impl #impl_generics #trait_ident #trait_generic_names for &#generic_type #where_clause {
             #(#methods)*
         }
     ))
@@ -143,6 +149,22 @@ mod tests {
                 parse_quote!(
                     #[automatically_derived]
                     impl<T, MT: MyTrait<T> + ?Sized> MyTrait<T> for &MT {}
+                )
+            );
+        }
+
+        #[test]
+        fn generics_bounded() {
+            let trait_ = parse_quote!(
+                trait MyTrait<T: 'static + Send> {}
+            );
+            let derived = super::super::derive(&trait_).unwrap();
+
+            assert_eq!(
+                derived,
+                parse_quote!(
+                    #[automatically_derived]
+                    impl<T: 'static + Send, MT: MyTrait<T> + ?Sized> MyTrait<T> for &MT {}
                 )
             );
         }
