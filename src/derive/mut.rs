@@ -48,7 +48,7 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
 
     // we must however remove the generic type bounds, to avoid repeating them
     let mut trait_generic_names = trait_generics.clone();
-    trait_generic_names.params = generics_declaration_to_generics(&trait_generics.params);
+    trait_generic_names.params = generics_declaration_to_generics(&trait_generics.params)?;
 
     impl_generics.params.push(syn::GenericParam::Type(
         parse_quote!(#generic_type: #trait_ident #trait_generic_names + ?Sized),
@@ -152,6 +152,25 @@ mod tests {
                 parse_quote!(
                     #[automatically_derived]
                     impl<T: 'static + Send, T_: Trait<T> + ?Sized> Trait<T> for &mut T_ {}
+                )
+            );
+        }
+
+        #[test]
+        fn generics_lifetime() {
+            let trait_ = parse_quote!(
+                trait Trait<'a, 'b: 'a, T: 'static + Send> {}
+            );
+            let derived = super::super::derive(&trait_).unwrap();
+
+            assert_eq!(
+                derived,
+                parse_quote!(
+                    #[automatically_derived]
+                    impl<'a, 'b: 'a, T: 'static + Send, T_: Trait<'a, 'b, T> + ?Sized>
+                        Trait<'a, 'b, T> for &mut T_
+                    {
+                    }
                 )
             );
         }

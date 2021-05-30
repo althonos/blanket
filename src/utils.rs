@@ -145,24 +145,29 @@ pub fn trait_to_generic_ident(trait_: &syn::ItemTrait) -> syn::Ident {
 /// Given a generic section `<T: 'static + Send>`, get simply `<T>`.
 pub fn generics_declaration_to_generics(
     generics: &Punctuated<GenericParam, Token![,]>,
-) -> Punctuated<GenericParam, Token![,]> {
+) -> syn::Result<Punctuated<GenericParam, Token![,]>> {
     generics
         .iter()
-        .filter_map(|gen| match gen {
-            syn::GenericParam::Type(t) => Some(t),
-            syn::GenericParam::Lifetime(_) => None,
-            syn::GenericParam::Const(_) => None,
+        .map(|gen| match gen {
+            syn::GenericParam::Type(t) => Ok(syn::GenericParam::Type(syn::TypeParam {
+                attrs: t.attrs.clone(),
+                ident: t.ident.clone(),
+                colon_token: None,
+                bounds: Punctuated::new(),
+                eq_token: None,
+                default: None,
+            })),
+            syn::GenericParam::Lifetime(l) => Ok(syn::GenericParam::Lifetime(syn::LifetimeDef {
+                attrs: l.attrs.clone(),
+                lifetime: l.lifetime.clone(),
+                colon_token: None,
+                bounds: Punctuated::new(),
+            })),
+            syn::GenericParam::Const(c) => {
+                Err(syn::Error::new(c.span(), "cannot handle const generics"))
+            }
         })
-        .map(|t| syn::TypeParam {
-            attrs: t.attrs.clone(),
-            ident: t.ident.clone(),
-            colon_token: None,
-            bounds: syn::punctuated::Punctuated::new(),
-            eq_token: None,
-            default: None,
-        })
-        .map(|t| syn::GenericParam::Type(t))
-        .collect::<_>()
+        .collect()
 }
 
 #[cfg(test)]
