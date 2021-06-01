@@ -2,6 +2,6 @@ error[E0080]: evaluation of constant value failed
   --> $DIR/noderive.rs:21:5
    |
 21 |     const_assert!(impls!(&mut AtomicCounter: Counter));
-   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ attempt to compute `0_usize - 1_usize` which would overflow
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ attempt to compute `0_usize - 1_usize`, which would overflow
    |
    = note: this error originates in a macro (in Nightly builds, run with -Z macro-backtrace for more info)
