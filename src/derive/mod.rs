@@ -1,3 +1,4 @@
+mod arc;
 mod r#box;
 mod r#mut;
 mod rc;
@@ -9,6 +10,7 @@ pub enum Derive {
     Ref,
     Mut,
     Rc,
+    Arc,
 }
 
 impl Derive {
@@ -18,6 +20,7 @@ impl Derive {
             "Ref" => Some(Derive::Ref),
             "Mut" => Some(Derive::Mut),
             "Rc" => Some(Derive::Rc),
+            "Arc" => Some(Derive::Arc),
             _ => None,
         }
     }
@@ -34,6 +37,7 @@ impl Derive {
             Derive::Ref => self::r#ref::derive(trait_),
             Derive::Mut => self::r#mut::derive(trait_),
             Derive::Rc => self::rc::derive(trait_),
+            Derive::Arc => self::arc::derive(trait_),
         }
     }
 }

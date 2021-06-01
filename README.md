@@ -52,6 +52,7 @@ The following derives are available:
 |--------|--------------------------------------------|--------------|------------------|-------------|
 | Ref    | `impl<T: Trait + ?Sized> Trait for &T`     | ✔️            |                  |             |
 | Rc     | `impl<T: Trait + ?Sized> Trait for Rc<T>`  | ✔️            |                  |             |
+| Arc    | `impl<T: Trait + ?Sized> Trait for Arc<T>` | ✔️            |                  |             |
 | Mut    | `impl<T: Trait + ?Sized> Trait for &mut T` | ✔️            | ✔️                |             |
 | Box    | `impl<T: Trait> Trait for Box<T>`          | ✔️            | ✔️                | ✔️           |
 
@@ -142,8 +143,8 @@ trait Visitor {
 - ✓ `#[derive(Mut)]`
 - ✓ `#[derive(Box)]`
 - ✓ `#[derive(Rc)]`
+- ✓ `#[derive(Arc)]`
 - ✗ Update `Box` derive to allow unsized types if possible.
-- ✗ `#[derive(Arc)]`
 - ✗ `#[derive(Cow)]`
 
 ## 📋 Changelog

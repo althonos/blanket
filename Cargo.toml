@@ -56,6 +56,10 @@ name = "derive_mut"
 path = "tests/derive_mut/mod.rs"
 harness = false
 [[test]]
+name = "derive_arc"
+path = "tests/derive_arc/mod.rs"
+harness = false
+[[test]]
 name = "derive_rc"
 path = "tests/derive_rc/mod.rs"
 harness = false

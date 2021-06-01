@@ -1,0 +1,5 @@
+error: cannot derive `Arc` for a trait declaring `self` methods
+ --> $DIR/receiver_self.rs:7:16
+  |
+7 |     fn extract(self);
+  |                ^^^^
