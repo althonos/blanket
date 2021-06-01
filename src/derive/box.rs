@@ -5,8 +5,14 @@ use crate::utils::{
 };
 
 pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
+
+    // build an identifier for the generic type used for the implementation
+    let trait_ident = &trait_.ident;
+    let generic_type = trait_to_generic_ident(&trait_);
+
     // build the methods
     let mut methods: Vec<syn::ImplItemMethod> = Vec::new();
+    let mut assoc_types: Vec<syn::ImplItemType> = Vec::new();
     for item in trait_.items.iter() {
         if let syn::TraitItem::Method(ref m) = item {
             let signature = &m.sig;
@@ -33,11 +39,14 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
             let item = parse_quote!(#[inline] #signature { #call });
             methods.push(item)
         }
+
+        if let syn::TraitItem::Type(t) = item {
+            let t_ident = &t.ident;
+            let item = parse_quote!( type #t_ident = <#generic_type as #trait_ident>::#t_ident ; );
+            assoc_types.push(item);
+        }
     }
 
-    // build an identifier for the generic type used for the implementation
-    let trait_ident = &trait_.ident;
-    let generic_type = trait_to_generic_ident(&trait_);
 
     // build the generics for the impl block:
     // we use the same generics as the trait itself, plus
@@ -59,6 +68,7 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
     Ok(parse_quote!(
         #[automatically_derived]
         impl #impl_generics #trait_ident #trait_generic_names for Box<#generic_type> #where_clause {
+            #(#assoc_types)*
             #(#methods)*
         }
     ))
@@ -202,6 +212,54 @@ mod tests {
                 parse_quote!(
                     #[automatically_derived]
                     impl<'a, 'b: 'a, T: 'static + Send, MT: MyTrait<'a, 'b, T>> MyTrait<'a, 'b, T> for Box<MT> {}
+                )
+            );
+        }
+
+        #[test]
+        fn associated_types() {
+            let trait_ = parse_quote!(
+                trait MyTrait { type Return; }
+            );
+            let derived = super::super::derive(&trait_).unwrap();
+
+            assert_eq!(
+                derived,
+                parse_quote!(
+                    #[automatically_derived]
+                    impl<MT: MyTrait> MyTrait for Box<MT> { type Return = <MT as MyTrait>::Return; }
+                )
+            );
+        }
+
+        #[test]
+        fn associated_types_bound() {
+            let trait_ = parse_quote!(
+                trait MyTrait { type Return: Clone; }
+            );
+            let derived = super::super::derive(&trait_).unwrap();
+
+            assert_eq!(
+                derived,
+                parse_quote!(
+                    #[automatically_derived]
+                    impl<MT: MyTrait> MyTrait for Box<MT> { type Return = <MT as MyTrait>::Return; }
+                )
+            );
+        }
+
+        #[test]
+        fn associated_types_dodgy_name() {
+            let trait_ = parse_quote!(
+                trait MyTrait { type r#type; }
+            );
+            let derived = super::super::derive(&trait_).unwrap();
+
+            assert_eq!(
+                derived,
+                parse_quote!(
+                    #[automatically_derived]
+                    impl<MT: MyTrait> MyTrait for Box<MT> { type r#type = <MT as MyTrait>::r#type; }
                 )
             );
         }
