@@ -3,6 +3,7 @@ name = "blanket"
 version = "0.1.5"
 authors = ["Martin Larralde <martin.larralde@embl.de>"]
 edition = "2018"
+resolver = "2"
 license = "MIT"
 description = "A simple macro to derive blanket implementations for your traits."
 repository = "https://github.com/althonos/blanket"
@@ -33,7 +34,7 @@ proc-macro2 = "1.0"
 [dependencies.syn]
 version = "1.0"
 default-features = false
-features = ["full"]
+features = ["clone-impls", "full", "parsing", "printing", "proc-macro"]
 
 [dev-dependencies]
 trybuild = "1.0"
