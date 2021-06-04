@@ -1,10 +1,8 @@
-use syn::parse_quote;
-use syn::spanned::Spanned;
+use syn::{parse_quote, spanned::Spanned};
 
-use crate::utils::deref_expr;
-use crate::utils::generics_declaration_to_generics;
-use crate::utils::signature_to_method_call;
-use crate::utils::trait_to_generic_ident;
+use crate::utils::{
+    deref_expr, generics_declaration_to_generics, signature_to_method_call, trait_to_generic_ident,
+};
 
 pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
     // build the methods

@@ -1,9 +1,5 @@
 use quote::quote_spanned;
-use syn::parse_quote;
-use syn::punctuated::Punctuated;
-use syn::spanned::Spanned;
-use syn::GenericParam;
-use syn::Token;
+use syn::{parse_quote, punctuated::Punctuated, spanned::Spanned, GenericParam, Token};
 
 /// Convert a function signature to a function call with the same arguments.
 pub fn signature_to_function_call(sig: &syn::Signature) -> syn::Result<syn::ExprCall> {

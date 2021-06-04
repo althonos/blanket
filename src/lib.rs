@@ -7,10 +7,8 @@ extern crate quote;
 
 use std::collections::HashSet;
 
-use quote::quote;
-use quote::ToTokens;
-use syn::parse_macro_input;
-use syn::spanned::Spanned;
+use quote::{quote, ToTokens};
+use syn::{parse_macro_input, spanned::Spanned};
 
 // ---------------------------------------------------------------------------
 
