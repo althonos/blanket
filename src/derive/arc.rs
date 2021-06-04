@@ -1,8 +1,10 @@
-use syn::{parse_quote, spanned::Spanned};
+use syn::parse_quote;
+use syn::spanned::Spanned;
 
-use crate::utils::{
-    deref_expr, generics_declaration_to_generics, signature_to_method_call, trait_to_generic_ident,
-};
+use crate::utils::deref_expr;
+use crate::utils::generics_declaration_to_generics;
+use crate::utils::signature_to_method_call;
+use crate::utils::trait_to_generic_ident;
 
 pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
     // build the methods
@@ -11,12 +13,16 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
         if let syn::TraitItem::Method(ref m) = item {
             if let Some(receiver) = m.sig.receiver() {
                 match receiver {
+                    syn::FnArg::Receiver(r) if r.mutability.is_some() => {
+                        let msg = "cannot derive `Arc` for a trait declaring `&mut self` methods";
+                        return Err(syn::Error::new(r.span(), msg));
+                    }
                     syn::FnArg::Receiver(r) if r.reference.is_none() => {
-                        let msg = "cannot derive `Mut` for a trait declaring `self` methods";
+                        let msg = "cannot derive `Arc` for a trait declaring `self` methods";
                         return Err(syn::Error::new(r.span(), msg));
                     }
                     syn::FnArg::Typed(pat) => {
-                        let msg = "cannot derive `Mut` for a trait declaring methods with arbitrary receiver types";
+                        let msg = "cannot derive `Arc` for a trait declaring methods with arbitrary receiver types";
                         return Err(syn::Error::new(pat.span(), msg));
                     }
                     _ => (),
@@ -54,7 +60,7 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
 
     Ok(parse_quote!(
         #[automatically_derived]
-        impl #impl_generics #trait_ident #trait_generic_names for &mut #generic_type #where_clause {
+        impl #impl_generics #trait_ident #trait_generic_names for std::sync::Arc<#generic_type> #where_clause {
             #(#methods)*
         }
     ))
@@ -69,32 +75,31 @@ mod tests {
         #[test]
         fn empty() {
             let trait_ = parse_quote!(
-                trait MyTrait {}
+                trait Trait {}
             );
-            let derived = super::super::derive(&trait_).unwrap();
             assert_eq!(
-                derived,
+                super::super::derive(&trait_).unwrap(),
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {}
+                    impl<T: Trait + ?Sized> Trait for std::sync::Arc<T> {}
                 )
             );
         }
 
         #[test]
-        fn receiver_mut() {
+        fn receiver_ref() {
             let trait_ = parse_quote!(
-                trait MyTrait {
-                    fn my_method(&mut self);
+                trait Trait {
+                    fn my_method(&self);
                 }
             );
             assert_eq!(
                 super::super::derive(&trait_).unwrap(),
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {
+                    impl<T: Trait + ?Sized> Trait for std::sync::Arc<T> {
                         #[inline]
-                        fn my_method(&mut self) {
+                        fn my_method(&self) {
                             (*(*self)).my_method()
                         }
                     }
@@ -103,9 +108,19 @@ mod tests {
         }
 
         #[test]
+        fn receiver_mut() {
+            let trait_ = parse_quote!(
+                trait Trait {
+                    fn my_method(&mut self);
+                }
+            );
+            assert!(super::super::derive(&trait_).is_err());
+        }
+
+        #[test]
         fn receiver_self() {
             let trait_ = parse_quote!(
-                trait MyTrait {
+                trait Trait {
                     fn my_method(self);
                 }
             );
@@ -115,7 +130,7 @@ mod tests {
         #[test]
         fn receiver_arbitrary() {
             let trait_ = parse_quote!(
-                trait MyTrait {
+                trait Trait {
                     fn my_method(self: Box<Self>);
                 }
             );
@@ -125,7 +140,7 @@ mod tests {
         #[test]
         fn generics() {
             let trait_ = parse_quote!(
-                trait Trait<T> {}
+                trait MyTrait<T> {}
             );
             let derived = super::super::derive(&trait_).unwrap();
 
@@ -133,7 +148,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<T, T_: Trait<T> + ?Sized> Trait<T> for &mut T_ {}
+                    impl<T, MT: MyTrait<T> + ?Sized> MyTrait<T> for std::sync::Arc<MT> {}
                 )
             );
         }
@@ -141,7 +156,7 @@ mod tests {
         #[test]
         fn generics_bounded() {
             let trait_ = parse_quote!(
-                trait Trait<T: 'static + Send> {}
+                trait MyTrait<T: 'static + Send> {}
             );
             let derived = super::super::derive(&trait_).unwrap();
 
@@ -149,7 +164,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<T: 'static + Send, T_: Trait<T> + ?Sized> Trait<T> for &mut T_ {}
+                    impl<T: 'static + Send, MT: MyTrait<T> + ?Sized> MyTrait<T> for std::sync::Arc<MT> {}
                 )
             );
         }
@@ -157,7 +172,7 @@ mod tests {
         #[test]
         fn generics_lifetime() {
             let trait_ = parse_quote!(
-                trait Trait<'a, 'b: 'a, T: 'static + Send> {}
+                trait MyTrait<'a, 'b: 'a, T: 'static + Send> {}
             );
             let derived = super::super::derive(&trait_).unwrap();
 
@@ -165,8 +180,8 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<'a, 'b: 'a, T: 'static + Send, T_: Trait<'a, 'b, T> + ?Sized>
-                        Trait<'a, 'b, T> for &mut T_
+                    impl<'a, 'b: 'a, T: 'static + Send, MT: MyTrait<'a, 'b, T> + ?Sized>
+                        MyTrait<'a, 'b, T> for std::sync::Arc<MT>
                     {
                     }
                 )

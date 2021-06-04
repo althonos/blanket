@@ -54,6 +54,7 @@ fn test_overload() {
             self.bytes += s.as_bytes().len();
             self::visitor::visit_str(self, s);
         }
+
         fn visit_char(&mut self, c: char) {
             self.count += 1
         }

@@ -1,7 +1,6 @@
 use syn::spanned::Spanned;
 
-use super::utils::prepend_function_path;
-use super::utils::signature_to_function_call;
+use super::utils::{prepend_function_path, signature_to_function_call};
 
 /// Update the method declarations of `trait_` to use default implementation from `default` module.
 pub fn defer_trait_methods(
