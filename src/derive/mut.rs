@@ -38,7 +38,7 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
 
         if let syn::TraitItem::Type(t) = item {
             let t_ident = &t.ident;
-            let attrs   = &t.attrs;
+            let attrs = &t.attrs;
             let item = parse_quote!( #(#attrs)* type #t_ident = <#generic_type as #trait_ident>::#t_ident ; );
             assoc_types.push(item);
         }
@@ -185,7 +185,9 @@ mod tests {
         #[test]
         fn associated_types() {
             let trait_ = parse_quote!(
-                trait MyTrait { type Return; }
+                trait MyTrait {
+                    type Return;
+                }
             );
             let derived = super::super::derive(&trait_).unwrap();
 
@@ -193,7 +195,9 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT { type Return = <MT as MyTrait>::Return; }
+                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {
+                        type Return = <MT as MyTrait>::Return;
+                    }
                 )
             );
         }
@@ -201,7 +205,9 @@ mod tests {
         #[test]
         fn associated_types_bound() {
             let trait_ = parse_quote!(
-                trait MyTrait { type Return: Clone; }
+                trait MyTrait {
+                    type Return: Clone;
+                }
             );
             let derived = super::super::derive(&trait_).unwrap();
 
@@ -209,7 +215,9 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT { type Return = <MT as MyTrait>::Return; }
+                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {
+                        type Return = <MT as MyTrait>::Return;
+                    }
                 )
             );
         }
@@ -217,7 +225,9 @@ mod tests {
         #[test]
         fn associated_types_dodgy_name() {
             let trait_ = parse_quote!(
-                trait MyTrait { type r#type; }
+                trait MyTrait {
+                    type r#type;
+                }
             );
             let derived = super::super::derive(&trait_).unwrap();
 
@@ -225,7 +235,9 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT { type r#type = <MT as MyTrait>::r#type; }
+                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {
+                        type r#type = <MT as MyTrait>::r#type;
+                    }
                 )
             );
         }
@@ -233,12 +245,12 @@ mod tests {
         #[test]
         fn associated_types_attrs() {
             let trait_ = parse_quote!(
-                trait MyTrait
-                {
-                    #[cfg(target_arch="wasm32")]
+                trait MyTrait {
+                    #[cfg(target_arch = "wasm32")]
                     type Return;
-                    #[cfg(not(target_arch="wasm32"))]
-                    type Return: Send;                }
+                    #[cfg(not(target_arch = "wasm32"))]
+                    type Return: Send;
+                }
             );
             let derived = super::super::derive(&trait_).unwrap();
 
@@ -246,11 +258,10 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT
-                    {
-                        #[cfg(target_arch="wasm32")]
+                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {
+                        #[cfg(target_arch = "wasm32")]
                         type Return = <MT as MyTrait>::Return;
-                        #[cfg(not(target_arch="wasm32"))]
+                        #[cfg(not(target_arch = "wasm32"))]
                         type Return = <MT as MyTrait>::Return;
                     }
                 )
