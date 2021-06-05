@@ -147,6 +147,16 @@ trait Visitor {
 - ✗ Update `Box` derive to allow unsized types if possible.
 - ✗ `#[derive(Cow)]`
 
+## 🤝 Credits
+
+`blanket` is developed and maintained by:
+- [Martin Larralde](https://github.com/althonos)
+
+The following people contributed to the project:
+- [Alexander Linne](https://github.com/alexanderlinne)
+- [Naja Melan](https://github.com/najamelan)
+
+
 ## 📋 Changelog
 
 This project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html)
