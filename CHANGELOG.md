@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/althonos/blanket/compare/v0.1.5...HEAD
+[Unreleased]: https://github.com/althonos/blanket/compare/v0.2.0...HEAD
+
+
+## [v0.2.0] - 2021-05-06
+
+[v0.2.0]: https://github.com/althonos/blanket/compare/v0.1.5...v0.2.0
+
+### Added
+- Implementation for `#[blanket(derive(Arc))]` ([#4](https://github.com/althonos/blanket/pull/4))
+- Support for associated type in derived traits ([#6](https://github.com/althonos/blanket/pull/6)).
+
+### Fixed
+- Missing features for the `syn` crate preventing the crate to compile without leaking dev-dependencies ([#5](https://github.com/althonos/blanket/pull/5)).
 
 
 ## [v0.1.5] - 2021-05-31
