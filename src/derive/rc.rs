@@ -9,6 +9,22 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
     let trait_ident = &trait_.ident;
     let generic_type = trait_to_generic_ident(&trait_);
 
+    // build the generics for the impl block:
+    // we use the same generics as the trait itself, plus
+    // a generic type that implements the trait for which we provide the
+    // blanket implementation
+    let trait_generics = &trait_.generics;
+    let where_clause = &trait_.generics.where_clause;
+    let mut impl_generics = trait_generics.clone();
+
+    // we must however remove the generic type bounds, to avoid repeating them
+    let mut trait_generic_names = trait_generics.clone();
+    trait_generic_names.params = generics_declaration_to_generics(&trait_generics.params)?;
+
+    impl_generics.params.push(syn::GenericParam::Type(
+        parse_quote!(#generic_type: #trait_ident #trait_generic_names + ?Sized),
+    ));
+
     // build the methods
     let mut methods: Vec<syn::ImplItemMethod> = Vec::new();
     let mut assoc_types: Vec<syn::ImplItemType> = Vec::new();
@@ -43,26 +59,10 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
         if let syn::TraitItem::Type(t) = item {
             let t_ident = &t.ident;
             let attrs = &t.attrs;
-            let item = parse_quote!( #(#attrs)* type #t_ident = <#generic_type as #trait_ident>::#t_ident ; );
+            let item = parse_quote!( #(#attrs)* type #t_ident = <#generic_type as #trait_ident #trait_generic_names>::#t_ident ; );
             assoc_types.push(item);
         }
     }
-
-    // build the generics for the impl block:
-    // we use the same generics as the trait itself, plus
-    // a generic type that implements the trait for which we provide the
-    // blanket implementation
-    let trait_generics = &trait_.generics;
-    let where_clause = &trait_.generics.where_clause;
-    let mut impl_generics = trait_generics.clone();
-
-    // we must however remove the generic type bounds, to avoid repeating them
-    let mut trait_generic_names = trait_generics.clone();
-    trait_generic_names.params = generics_declaration_to_generics(&trait_generics.params)?;
-
-    impl_generics.params.push(syn::GenericParam::Type(
-        parse_quote!(#generic_type: #trait_ident #trait_generic_names + ?Sized),
-    ));
 
     Ok(parse_quote!(
         #[automatically_derived]
@@ -276,6 +276,26 @@ mod tests {
                         type Return = <MT as MyTrait>::Return;
                         #[cfg(not(target_arch = "wasm32"))]
                         type Return = <MT as MyTrait>::Return;
+                    }
+                )
+            );
+        }
+
+        #[test]
+        fn associated_types_and_generics() {
+            let trait_ = parse_quote!(
+                trait MyTrait<T> {
+                    type Return;
+                }
+            );
+            let derived = super::super::derive(&trait_).unwrap();
+
+            assert_eq!(
+                derived,
+                parse_quote!(
+                    #[automatically_derived]
+                    impl<T, MT: MyTrait<T> + ?Sized> MyTrait<T> for std::rc::Rc<MT> {
+                        type Return = <MT as MyTrait<T>>::Return;
                     }
                 )
             );
