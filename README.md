@@ -155,7 +155,7 @@ trait Visitor {
 The following people contributed to the project:
 - [Alexander Linne](https://github.com/alexanderlinne)
 - [Naja Melan](https://github.com/najamelan)
-
+- [Justin Lovinger](https://github.com/JustinLovinger)
 
 ## 📋 Changelog
 

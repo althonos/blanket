@@ -7,7 +7,20 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-[Unreleased]: https://github.com/althonos/blanket/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/althonos/blanket/compare/v0.3.0...HEAD
+
+
+## [v0.3.0] - 2023-06-19
+
+[v0.3.0]: https://github.com/althonos/blanket/compare/v0.2.0...v0.3.0
+
+### Fixed
+- `blanket` macro failing to process types with generic arguments and associated types ([#8](https://github.com/althonos/blanket/issues/8), by [@JustinLovinger](https://github.com/JustinLovinger)).
+
+### Changed
+- Updated `syn` dependency to `v2.0`.
+- `#[blanket(default = ...)]` now also accepts a path instead of a string literal.
+
 
 
 ## [v0.2.0] - 2021-05-06
@@ -15,8 +28,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 [v0.2.0]: https://github.com/althonos/blanket/compare/v0.1.5...v0.2.0
 
 ### Added
-- Implementation for `#[blanket(derive(Arc))]` ([#4](https://github.com/althonos/blanket/pull/4))
-- Support for associated type in derived traits ([#6](https://github.com/althonos/blanket/pull/6)).
+- Implementation for `#[blanket(derive(Arc))]` ([#4](https://github.com/althonos/blanket/pull/4), by [@najamelan](https://github.com/najamelan))
+- Support for associated type in derived traits ([#6](https://github.com/althonos/blanket/pull/6), by [@najamelan](https://github.com/najamelan)).
 
 ### Fixed
 - Missing features for the `syn` crate preventing the crate to compile without leaking dev-dependencies ([#5](https://github.com/althonos/blanket/pull/5)).
