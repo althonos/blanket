@@ -5,46 +5,12 @@ on:
   - pull_request
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        rust-toolchain:
-          - stable
-          - beta
-          - nightly
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v1
-    - name: Setup Rust ${{ matrix.rust-toolchain }}
-      uses: actions-rs/toolchain@v1
-      with:
-        profile: minimal
-        toolchain: ${{ matrix.rust-toolchain }}
-        override: true
-    - name: Setup cache for cargo
-      uses: actions/cache@v2
-      with:
-        path: target
-        key: ${{ runner.os }}-cargo-${{ matrix.rust-toolchain }}
-    - name: Check code
-      uses: actions-rs/cargo@v1
-      with:
-        command: check
-    - name: Measure code coverage
-      uses: actions-rs/tarpaulin@v0.1
-      with:
-        version: '0.16.0'
-        args: '--lib -v --out Xml --ciserver github-actions'
-    - name: Upload coverage statistics
-      run: curl -SsL "https://codecov.io/bash" | bash -s
-
 
   lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
       - name: Setup Rust stable
         uses: actions-rs/toolchain@v1
         with:
@@ -57,3 +23,81 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
+
+  test:
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust-toolchain:
+          - stable
+          - beta
+          - nightly
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - name: Setup Rust ${{ matrix.rust-toolchain }}
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: ${{ matrix.rust-toolchain }}
+        override: true
+    - name: Check code
+      uses: actions-rs/cargo@v1
+      with:
+        command: check
+    - name: Measure code coverage
+      uses: actions-rs/tarpaulin@v0.1
+      with:
+        version: '0.19.0'
+        args: '-v --out Xml --ciserver github-actions'
+    - name: Upload to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        flags: ${{ matrix.rust-toolchain }}
+        name: test-${{ matrix.rust-toolchain }}
+        fail_ci_if_error: false
+        token: ${{ secrets.CODECOV_TOKEN }}
+        codecov_curl_args: "--globoff"
+        verbose: true
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+    if: "startsWith(github.ref, 'refs/tags/v')"
+    environment: Crates.io
+    name: Publish crates
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - name: Setup Rust ${{ matrix.rust-toolchain }}
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+    - name: Package and publish crate
+      uses: actions-rs/cargo@v1
+      with:
+        command: publish
+        args: --token ${{ secrets.CRATES_IO_TOKEN }}
+
+  release:
+    needs: publish
+    environment: GitHub Releases
+    runs-on: ubuntu-latest
+    if: "startsWith(github.ref, 'refs/tags/v')"
+    name: Release
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - name: Release a Changelog
+      uses: rasmus-saks/release-a-changelog-action@v1.0.1
+      with:
+        github-token: '${{ secrets.GITHUB_TOKEN }}'
+      
+
+
