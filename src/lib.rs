@@ -45,27 +45,44 @@ impl Args {
                 }
             }
             syn::Meta::NameValue(ref n) if n.path.to_token_stream().to_string() == "default" => {
-                if let syn::Expr::Lit(ref lit) = n.value {
-                    if let syn::Lit::Str(ref s) = lit.lit {
-                        match syn::parse_str(&s.value()) {
-                            Ok(path) if default.is_none() => {
-                                default = Some(path);
+                match n.value {
+                    syn::Expr::Lit(ref lit) => {
+                        if let syn::Lit::Str(ref s) = lit.lit {
+                            match syn::parse_str(&s.value()) {
+                                Ok(path) if default.is_none() => {
+                                    default = Some(path);
+                                }
+                                Ok(_) => {
+                                    return Err(syn::Error::new(
+                                        s.span(),
+                                        "duplicate default module given",
+                                    ))
+                                }
+                                Err(_) => {
+                                    return Err(syn::Error::new(
+                                        s.span(),
+                                        "expected module identifier",
+                                    ))
+                                }
                             }
-                            Ok(_) => {
-                                return Err(syn::Error::new(
-                                    s.span(),
-                                    "duplicate default module given",
-                                ))
-                            }
-                            Err(_) => {
-                                return Err(syn::Error::new(s.span(), "expected module identifier"))
-                            }
+                        } else {
+                            return Err(syn::Error::new(lit.lit.span(), "expected string literal"));
                         }
-                    } else {
-                        return Err(syn::Error::new(lit.lit.span(), "expected string literal"));
                     }
-                } else {
-                    return Err(syn::Error::new(n.value.span(), "expected literal"));
+                    syn::Expr::Path(ref expr) => {
+                        if default.replace(expr.path.clone()).is_some() {
+                            return Err(syn::Error::new(
+                                n.span(),
+                                "duplicate default module given",
+                            ));
+                        }
+                    }
+                    _ => {
+                        return Err(syn::Error::new(
+                            n.value.span(),
+                            "expected path or string literal",
+                        ));
+                    }
                 }
             }
             _ => return Err(syn::Error::new(arg.span(), "unexpected argument")),
