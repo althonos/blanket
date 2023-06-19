@@ -2,7 +2,7 @@
 
 *A simple macro to derive blanket implementations for your traits.*
 
-[![Actions](https://img.shields.io/github/workflow/status/althonos/blanket/Test?style=flat-square&maxAge=600)](https://github.com/althonos/blanket/actions)
+[![Actions](https://img.shields.io/github/actions/workflow/status/althonos/blanket/test.yml?branch=master&style=flat-square&maxAge=600)](https://github.com/althonos/blanket/actions)
 [![Codecov](https://img.shields.io/codecov/c/gh/althonos/blanket/master.svg?style=flat-square&maxAge=600)](https://codecov.io/gh/althonos/blanket)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square&maxAge=2678400)](https://choosealicense.com/licenses/mit/)
 [![Source](https://img.shields.io/badge/source-GitHub-303030.svg?maxAge=2678400&style=flat-square)](https://github.com/althonos/blanket)
