@@ -46,11 +46,17 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: check
-    - name: Measure code coverage
+        args: '--tests'
+    - name: Run tests
+      if: "${{ matrix.rust-toolchain == 'nightly' }}"
+      uses: actions-rs/cargo@v1
+      with:
+        command: test
+    - name: Measure code coverage of unit tests
       uses: actions-rs/tarpaulin@v0.1
       with:
         version: '0.19.0'
-        args: '-v --out Xml --ciserver github-actions'
+        args: '-v --lib --out Xml --ciserver github-actions'
     - name: Upload to Codecov
       uses: codecov/codecov-action@v3
       with:
