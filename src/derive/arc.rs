@@ -61,7 +61,13 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
         if let syn::TraitItem::Type(t) = item {
             let t_ident = &t.ident;
             let attrs = &t.attrs;
-            let item = parse_quote!( #(#attrs)* type #t_ident = <#generic_type as #trait_ident #trait_generic_names>::#t_ident ; );
+
+            let t_generics = &t.generics;
+            let where_clause = &t.generics.where_clause;
+            let mut t_generic_names = t_generics.clone();
+            t_generic_names.params = generics_declaration_to_generics(&t_generics.params)?;
+
+            let item = parse_quote!( #(#attrs)* type #t_ident #t_generics = <#generic_type as #trait_ident #trait_generic_names>::#t_ident #t_generic_names #where_clause ; );
             assoc_types.push(item);
         }
     }
@@ -298,6 +304,70 @@ mod tests {
                     #[automatically_derived]
                     impl<T, MT: MyTrait<T> + ?Sized> MyTrait<T> for std::sync::Arc<MT> {
                         type Return = <MT as MyTrait<T>>::Return;
+                    }
+                )
+            );
+        }
+
+        #[test]
+        fn associated_type_generics() {
+            let trait_ = parse_quote!(
+                trait MyTrait {
+                    type Return<T>;
+                }
+            );
+            let derived = super::super::derive(&trait_).unwrap();
+
+            assert_eq!(
+                derived,
+                parse_quote!(
+                    #[automatically_derived]
+                    impl<MT: MyTrait + ?Sized> MyTrait for std::sync::Arc<MT> {
+                        type Return<T> = <MT as MyTrait>::Return<T>;
+                    }
+                )
+            );
+        }
+
+        #[test]
+        fn associated_type_generics_bounded() {
+            let trait_ = parse_quote!(
+                trait MyTrait {
+                    type Return<T: 'static + Send>;
+                }
+            );
+            let derived = super::super::derive(&trait_).unwrap();
+
+            assert_eq!(
+                derived,
+                parse_quote!(
+                    #[automatically_derived]
+                    impl<MT: MyTrait + ?Sized> MyTrait for std::sync::Arc<MT> {
+                        type Return<T: 'static + Send> = <MT as MyTrait>::Return<T>;
+                    }
+                )
+            );
+        }
+
+        #[test]
+        fn associated_type_generics_lifetimes() {
+            let trait_ = parse_quote!(
+                trait MyTrait {
+                    type Return<'a>
+                    where
+                        Self: 'a;
+                }
+            );
+            let derived = super::super::derive(&trait_).unwrap();
+
+            assert_eq!(
+                derived,
+                parse_quote!(
+                    #[automatically_derived]
+                    impl<MT: MyTrait + ?Sized> MyTrait for std::sync::Arc<MT> {
+                        type Return<'a> = <MT as MyTrait>::Return<'a>
+                        where
+                            Self: 'a;
                     }
                 )
             );
