@@ -26,25 +26,22 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
     ));
 
     // build the methods
-    let mut methods: Vec<syn::ImplItemMethod> = Vec::new();
+    let mut methods: Vec<syn::ImplItemFn> = Vec::new();
     let mut assoc_types: Vec<syn::ImplItemType> = Vec::new();
     for item in trait_.items.iter() {
-        if let syn::TraitItem::Method(ref m) = item {
-            if let Some(receiver) = m.sig.receiver() {
-                match receiver {
-                    syn::FnArg::Receiver(r) if r.mutability.is_some() => {
-                        let msg = "cannot derive `Ref` for a trait declaring `&mut self` methods";
-                        return Err(syn::Error::new(r.span(), msg));
-                    }
-                    syn::FnArg::Receiver(r) if r.reference.is_none() => {
-                        let msg = "cannot derive `Ref` for a trait declaring `self` methods";
-                        return Err(syn::Error::new(r.span(), msg));
-                    }
-                    syn::FnArg::Typed(pat) => {
-                        let msg = "cannot derive `Ref` for a trait declaring methods with arbitrary receiver types";
-                        return Err(syn::Error::new(pat.span(), msg));
-                    }
-                    _ => (),
+        if let syn::TraitItem::Fn(ref m) = item {
+            if let Some(r) = m.sig.receiver() {
+                let err = if r.colon_token.is_some() {
+                    Some("cannot derive `Ref` for a trait declaring methods with arbitrary receiver types")
+                } else if r.mutability.is_some() {
+                    Some("cannot derive `Ref` for a trait declaring `&mut self` methods")
+                } else if r.reference.is_none() {
+                    Some("cannot derive `Ref` for a trait declaring `self` methods")
+                } else {
+                    None
+                };
+                if let Some(msg) = err {
+                    return Err(syn::Error::new(r.span(), msg));
                 }
             }
 

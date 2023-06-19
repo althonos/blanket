@@ -32,7 +32,7 @@ proc-macro = true
 quote = "1.0"
 proc-macro2 = "1.0"
 [dependencies.syn]
-version = "1.0"
+version = "2.0"
 default-features = false
 features = ["clone-impls", "full", "parsing", "printing", "proc-macro"]
 
@@ -41,7 +41,7 @@ trybuild = "1.0"
 impls = "1.0"
 static_assertions = "1.1"
 [dev-dependencies.syn]
-version = "1.0"
+version = "2.0"
 features = ["full", "extra-traits"]
 
 [features]

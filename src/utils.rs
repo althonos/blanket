@@ -36,9 +36,7 @@ pub fn signature_to_function_call(sig: &syn::Signature) -> syn::Result<syn::Expr
     // Return the function call as an expression
     Ok(syn::ExprCall {
         attrs: Vec::new(),
-        paren_token: syn::token::Paren {
-            span: funcexpr.span(),
-        },
+        paren_token: syn::token::Paren::default(),
         func: Box::new(funcexpr.into()),
         args: funcargs,
     })
@@ -79,7 +77,7 @@ pub fn signature_to_method_call(sig: &syn::Signature) -> syn::Result<syn::ExprMe
         },
         method: sig.ident.clone(),
         turbofish: None,
-        paren_token: syn::token::Paren { span: sig.span() },
+        paren_token: syn::token::Paren::default(),
         args: funcargs,
     })
 }
@@ -100,7 +98,7 @@ pub fn prepend_function_path(call: &mut syn::ExprCall, module: syn::Path) -> syn
 pub fn deref_expr(expr: syn::Expr) -> syn::Expr {
     syn::Expr::Paren(syn::ExprParen {
         attrs: Vec::new(),
-        paren_token: syn::token::Paren { span: expr.span() },
+        paren_token: syn::token::Paren::default(),
         expr: Box::new(syn::Expr::Unary(syn::ExprUnary {
             attrs: Vec::new(),
             op: syn::UnOp::Deref(parse_quote!(*)),
@@ -153,7 +151,7 @@ pub fn generics_declaration_to_generics(
                 eq_token: None,
                 default: None,
             })),
-            syn::GenericParam::Lifetime(l) => Ok(syn::GenericParam::Lifetime(syn::LifetimeDef {
+            syn::GenericParam::Lifetime(l) => Ok(syn::GenericParam::Lifetime(syn::LifetimeParam {
                 attrs: l.attrs.clone(),
                 lifetime: l.lifetime.clone(),
                 colon_token: None,

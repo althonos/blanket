@@ -1,5 +1,5 @@
 error: cannot derive `Arc` for a trait declaring methods with arbitrary receiver types
- --> $DIR/receiver_box.rs:7:18
+ --> tests/derive_arc/fails/receiver_box.rs:7:18
   |
 7 |     fn increment(self: Box<Self>);
-  |                  ^^^^
+  |                  ^^^^^^^^^^^^^^^

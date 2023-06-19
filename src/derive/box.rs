@@ -26,29 +26,28 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
     ));
 
     // build the methods
-    let mut methods: Vec<syn::ImplItemMethod> = Vec::new();
+    let mut methods: Vec<syn::ImplItemFn> = Vec::new();
     let mut assoc_types: Vec<syn::ImplItemType> = Vec::new();
     for item in trait_.items.iter() {
-        if let syn::TraitItem::Method(ref m) = item {
+        if let syn::TraitItem::Fn(ref m) = item {
             let signature = &m.sig;
             let mut call = signature_to_method_call(signature)?;
 
-            match signature.receiver() {
-                // fn()
-                None => unimplemented!(),
-                // `fn(self: Type)`
-                Some(syn::FnArg::Typed(pat)) => {
-                    let msg = "cannot derive `Box` for a trait declaring methods with arbitrary receiver types";
-                    return Err(syn::Error::new(pat.span(), msg));
-                }
-                // `fn(&self)` and `fn(&mut self)`
-                Some(syn::FnArg::Receiver(r)) if r.reference.is_some() => {
+            if let Some(r) = m.sig.receiver() {
+                let err = if r.colon_token.is_some() {
+                    Some("cannot derive `Box` for a trait declaring methods with arbitrary receiver types")
+                } else if r.reference.is_some() {
                     call.receiver = Box::new(deref_expr(deref_expr(*call.receiver)));
-                }
-                // `fn(self)`
-                Some(syn::FnArg::Receiver(_)) => {
+                    None
+                } else {
                     call.receiver = Box::new(deref_expr(*call.receiver));
+                    None
+                };
+                if let Some(msg) = err {
+                    return Err(syn::Error::new(r.span(), msg));
                 }
+            } else {
+                unimplemented!()
             }
 
             let item = parse_quote!(#[inline] #signature { #call });

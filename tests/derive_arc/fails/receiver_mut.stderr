@@ -1,5 +1,5 @@
 error: cannot derive `Arc` for a trait declaring `&mut self` methods
- --> $DIR/receiver_mut.rs:7:18
+ --> tests/derive_arc/fails/receiver_mut.rs:7:18
   |
 7 |     fn increment(&mut self);
-  |                  ^
+  |                  ^^^^^^^^^

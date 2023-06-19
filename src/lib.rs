@@ -8,7 +8,7 @@ extern crate quote;
 use std::collections::HashSet;
 
 use quote::{quote, ToTokens};
-use syn::{parse_macro_input, spanned::Spanned};
+use syn::{parse_macro_input, punctuated::Punctuated, spanned::Spanned};
 
 // ---------------------------------------------------------------------------
 
@@ -24,42 +24,29 @@ struct Args {
 }
 
 impl Args {
-    fn from_args(args: &syn::AttributeArgs) -> syn::Result<Self> {
+    fn from_meta(arg: &syn::Meta) -> syn::Result<Self> {
         let mut default = None;
         let mut derives = HashSet::new();
 
-        let meta = args
-            .iter()
-            .map(|arg| match arg {
-                syn::NestedMeta::Lit(lit) => Err(syn::Error::new(lit.span(), "unexpected literal")),
-                syn::NestedMeta::Meta(meta) => Ok(meta),
-            })
-            .collect::<syn::Result<Vec<&syn::Meta>>>()?;
-
-        for arg in meta {
-            // argument paths are compared against their token stream serialization
-            // to avoid to compile `syn` with the `extra-traits` feature
-            match arg {
-                syn::Meta::List(ref l) if l.path.to_token_stream().to_string() == "derive" => {
-                    for elem in l.nested.iter() {
-                        if let syn::NestedMeta::Meta(syn::Meta::Path(path)) = elem {
-                            if let Some(d) = derive::Derive::from_path(&path) {
-                                derives.insert(d);
-                            } else {
-                                return Err(syn::Error::new(
-                                    path.span(),
-                                    "unknown blanket derive option",
-                                ));
-                            }
-                        } else {
-                            return Err(syn::Error::new(elem.span(), "expected identifier"));
-                        }
+        match arg {
+            syn::Meta::List(ref l) if l.path.to_token_stream().to_string() == "derive" => {
+                let types = l.parse_args_with(
+                    Punctuated::<syn::Path, syn::Token![,]>::parse_separated_nonempty,
+                )?;
+                for pair in types.into_pairs() {
+                    if let Some(d) = derive::Derive::from_path(pair.value()) {
+                        derives.insert(d);
+                    } else {
+                        return Err(syn::Error::new(
+                            pair.span(),
+                            "unknown blanket derive option",
+                        ));
                     }
                 }
-                syn::Meta::NameValue(ref n)
-                    if n.path.to_token_stream().to_string() == "default" =>
-                {
-                    if let syn::Lit::Str(ref s) = n.lit {
+            }
+            syn::Meta::NameValue(ref n) if n.path.to_token_stream().to_string() == "default" => {
+                if let syn::Expr::Lit(ref lit) = n.value {
+                    if let syn::Lit::Str(ref s) = lit.lit {
                         match syn::parse_str(&s.value()) {
                             Ok(path) if default.is_none() => {
                                 default = Some(path);
@@ -75,11 +62,13 @@ impl Args {
                             }
                         }
                     } else {
-                        return Err(syn::Error::new(n.lit.span(), "expected string literal"));
+                        return Err(syn::Error::new(lit.lit.span(), "expected string literal"));
                     }
+                } else {
+                    return Err(syn::Error::new(n.value.span(), "expected literal"));
                 }
-                _ => return Err(syn::Error::new(arg.span(), "unexpected argument")),
             }
+            _ => return Err(syn::Error::new(arg.span(), "unexpected argument")),
         }
 
         Ok(Self { default, derives })
@@ -95,9 +84,9 @@ pub fn blanket(
 ) -> proc_macro::TokenStream {
     // parse input
     let trait_ = parse_macro_input!(input as syn::ItemTrait);
-    let attribute_args = parse_macro_input!(args as syn::AttributeArgs);
+    let args = parse_macro_input!(args as syn::Meta);
     // parse macro arguments and immediately exit if they are invalid
-    let args = match Args::from_args(&attribute_args) {
+    let args = match Args::from_meta(&args) {
         Ok(args) => args,
         Err(e) => {
             let err = e.to_compile_error();
@@ -122,6 +111,6 @@ pub fn blanket(
             Err(e) => out.extend(e.to_compile_error()),
         }
     }
-    // return the new `proc-macro2` token stream as a `proc-macro` stream
+    // // return the new `proc-macro2` token stream as a `proc-macro` stream
     proc_macro::TokenStream::from(out)
 }
