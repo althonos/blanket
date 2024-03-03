@@ -63,7 +63,7 @@ pub trait WrapperType {
     fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
         // build an identifier for the generic type used for the implementation
         let trait_ident = &trait_.ident;
-        let generic_type = trait_to_generic_ident(&trait_);
+        let generic_type = trait_to_generic_ident(trait_);
         let wrapper_type = Self::wrap(&generic_type);
 
         // build the generics for the impl block:
@@ -85,7 +85,7 @@ pub trait WrapperType {
             if let syn::TraitItem::Fn(ref m) = item {
                 methods.push(Self::derive_method(
                     m,
-                    &trait_ident,
+                    trait_ident,
                     &generic_type,
                     &trait_generic_names,
                 )?)
@@ -167,9 +167,9 @@ pub trait WrapperType {
         } else {
             let call = signature_to_associated_function_call(
                 &m.sig,
-                &trait_ident,
-                &generic_type,
-                &trait_generic_names,
+                trait_ident,
+                generic_type,
+                trait_generic_names,
             )?;
             call.into()
         };
