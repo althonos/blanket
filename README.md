@@ -143,11 +143,10 @@ trait Visitor {
 - ✓ Support for traits with generic arguments.
 - ✓ `#[derive(Ref)]`
 - ✓ `#[derive(Mut)]`
-- ✓ `#[derive(Box)]`
+- ✓ `#[derive(Box)]` for both sized and unsized types.
 - ✓ `#[derive(Rc)]`
 - ✓ `#[derive(Arc)]`
-- ✗ Update `Box` derive to allow unsized types if possible.
-- ✗ `#[derive(Cow)]`
+- ✓ `#[derive(Cow)]`
 
 ## 🤝 Credits
 
