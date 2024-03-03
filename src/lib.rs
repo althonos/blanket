@@ -1,5 +1,4 @@
-#![cfg_attr(feature = "_doc", feature(doc_cfg, external_doc))]
-#![cfg_attr(feature = "_doc", doc(include = "../README.md"))]
+#![doc = include_str!("../README.md")]
 
 extern crate proc_macro;
 extern crate proc_macro2;
@@ -95,6 +94,12 @@ impl Args {
 
 // ---------------------------------------------------------------------------
 
+/// Generate blanket implementations for a trait.
+///
+/// This procedural macro must be used on a `trait` block. It can be used
+/// to either derive a blanket implementation, or to delegate the method
+/// implementations of a trait to a module.
+///
 #[proc_macro_attribute]
 pub fn blanket(
     args: proc_macro::TokenStream,
