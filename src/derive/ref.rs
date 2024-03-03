@@ -1,7 +1,8 @@
 use syn::{parse_quote, spanned::Spanned};
 
 use crate::utils::{
-    deref_expr, generics_declaration_to_generics, signature_to_method_call, trait_to_generic_ident,
+    deref_expr, generics_declaration_to_generics, signature_to_method_call,
+    signature_to_static_method_call, trait_to_generic_ident,
 };
 
 pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
@@ -30,7 +31,7 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
     let mut assoc_types: Vec<syn::ImplItemType> = Vec::new();
     for item in trait_.items.iter() {
         if let syn::TraitItem::Fn(ref m) = item {
-            if let Some(r) = m.sig.receiver() {
+            let call: syn::Expr = if let Some(r) = m.sig.receiver() {
                 let err = if r.colon_token.is_some() {
                     Some("cannot derive `Ref` for a trait declaring methods with arbitrary receiver types")
                 } else if r.mutability.is_some() {
@@ -43,14 +44,22 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
                 if let Some(msg) = err {
                     return Err(syn::Error::new(r.span(), msg));
                 }
-            }
-
-            let mut call = signature_to_method_call(&m.sig)?;
-            call.receiver = Box::new(deref_expr(deref_expr(*call.receiver)));
+                let mut call = signature_to_method_call(&m.sig)?;
+                call.receiver = Box::new(deref_expr(deref_expr(*call.receiver)));
+                call.into()
+            } else {
+                let call = signature_to_static_method_call(
+                    &m.sig,
+                    &trait_ident,
+                    &generic_type,
+                    &trait_generic_names,
+                )?;
+                call.into()
+            };
 
             let signature = &m.sig;
             let item = parse_quote!(#[inline] #signature { #call });
-            methods.push(item)
+            methods.push(item);
         }
 
         if let syn::TraitItem::Type(t) = item {

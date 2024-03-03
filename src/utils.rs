@@ -42,10 +42,47 @@ pub fn signature_to_function_call(sig: &syn::Signature) -> syn::Result<syn::Expr
     })
 }
 
+/// Convert a function signature to a static method call with the same arguments.
+///
+/// A static method (or associated type method)
+pub fn signature_to_static_method_call(
+    sig: &syn::Signature,
+    trait_ident: &syn::Ident,
+    generic_type: &syn::Ident,
+    trait_generic_names: &syn::Generics,
+) -> syn::Result<syn::ExprCall> {
+    let mut call = signature_to_function_call(sig)?;
+    if let syn::Expr::Path(ref mut exprpath) = call.func.as_mut() {
+        let span = generic_type.span();
+        exprpath.qself = Some(syn::QSelf {
+            lt_token: syn::Token![<](span),
+            ty: Box::new(parse_quote!(#generic_type)),
+            position: 1,
+            as_token: Some(syn::Token![as](span)),
+            gt_token: syn::Token![>](span),
+        });
+
+        let path_arguments = if trait_generic_names.params.is_empty() {
+            syn::PathArguments::None
+        } else {
+            syn::PathArguments::AngleBracketed(parse_quote!(#trait_generic_names))
+        };
+
+        exprpath.path.segments.insert(
+            0,
+            syn::PathSegment {
+                ident: trait_ident.clone(),
+                arguments: path_arguments,
+            },
+        );
+    }
+    Ok(call)
+}
+
 /// Convert a function signature to a method call with the same arguments.
 pub fn signature_to_method_call(sig: &syn::Signature) -> syn::Result<syn::ExprMethodCall> {
     // Extract receiver
-    let receiver = sig.receiver().unwrap();
+    let receiver = sig.receiver().expect("method has no receiver");
     let span = receiver.span();
 
     // Extract arguments
