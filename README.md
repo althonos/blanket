@@ -48,13 +48,15 @@ provided the trait methods fit the constraints for that derive, such as
 only declaring methods with `&self` of `&mut self` as their receiver.
 The following derives are available:
 
-| Derive | Impl block                                 | `fn (&self)` | `fn (&mut self)` | `fn (self)` |
-|--------|--------------------------------------------|--------------|------------------|-------------|
-| Ref    | `impl<T: Trait + ?Sized> Trait for &T`     | ✔️            |                  |             |
-| Rc     | `impl<T: Trait + ?Sized> Trait for Rc<T>`  | ✔️            |                  |             |
-| Arc    | `impl<T: Trait + ?Sized> Trait for Arc<T>` | ✔️            |                  |             |
-| Mut    | `impl<T: Trait + ?Sized> Trait for &mut T` | ✔️            | ✔️                |             |
-| Box    | `impl<T: Trait> Trait for Box<T>`          | ✔️            | ✔️                | ✔️           |
+| Derive | Impl block                                              | `fn (&self)` | `fn (&mut self)` | `fn (self)` |
+|--------|---------------------------------------------------------|--------------|------------------|-------------|
+| Ref    | `impl<T: Trait + ?Sized> Trait for &T`                  | ✔️            |                  |             |
+| Rc     | `impl<T: Trait + ?Sized> Trait for Rc<T>`               | ✔️            |                  |             |
+| Arc    | `impl<T: Trait + ?Sized> Trait for Arc<T>`              | ✔️            |                  |             |
+| Mut    | `impl<T: Trait + ?Sized> Trait for &mut T`              | ✔️            | ✔️                |             |
+| Box¹   | `impl<T: Trait + ?Sized> Trait for Box<T>`              | ✔️            | ✔️                |             |
+| Box²   | `impl<T: Trait> Trait for Box<T>`                       | ✔️            | ✔️                | ✔️           |
+| Cow    | `impl<T: Trait + ToOwned + ?Sized> Trait for Cow<_, T>` | ✔️            |                  |             |
 
 For instance, with our own version of `std::fmt::Write`, we can provide
 an implementation for `Box<impl Write>` and `&mut impl Write`:

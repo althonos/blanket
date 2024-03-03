@@ -1,5 +1,6 @@
 mod arc;
 mod r#box;
+mod cow;
 mod r#mut;
 mod rc;
 mod r#ref;
@@ -9,6 +10,7 @@ mod r#ref;
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Type {
     Box,
+    Cow,
     Ref,
     Mut,
     Rc,
@@ -19,6 +21,7 @@ impl Type {
     pub fn from_str(s: &str) -> Option<Self> {
         match s {
             "Box" => Some(Type::Box),
+            "Cow" => Some(Type::Cow),
             "Ref" => Some(Type::Ref),
             "Mut" => Some(Type::Mut),
             "Rc" => Some(Type::Rc),
@@ -36,6 +39,7 @@ impl Type {
     pub fn defer_trait_methods(&self, trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
         match self {
             Type::Box => self::r#box::derive(trait_),
+            Type::Cow => self::cow::derive(trait_),
             Type::Ref => self::r#ref::derive(trait_),
             Type::Mut => self::r#mut::derive(trait_),
             Type::Rc => self::rc::derive(trait_),

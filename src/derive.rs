@@ -1,4 +1,5 @@
 use syn::parse_quote;
+use syn::punctuated::Punctuated;
 use syn::spanned::Spanned;
 
 use crate::utils::deref_expr;
@@ -23,6 +24,9 @@ pub trait WrapperType {
 
     /// The receivers allowed for this wrapper type.
     const RECEIVERS: &'static [Receiver];
+
+    /// Additional types to add to the generic type bound.
+    const BOUNDS: &'static [&'static str] = &[];
 
     /// Wrap the given identifier into the wrapper type.
     fn wrap(ty: &syn::Ident) -> syn::Type;
@@ -113,15 +117,27 @@ pub trait WrapperType {
         }
 
         // Add generic type for the type we are creating ourselves
-        if sized {
-            impl_generics.params.push(syn::GenericParam::Type(
-                parse_quote!(#generic_type: #trait_ident #trait_generic_names),
-            ));
-        } else {
-            impl_generics.params.push(syn::GenericParam::Type(
-                parse_quote!(#generic_type: #trait_ident #trait_generic_names + ?Sized),
-            ));
+        let span = generic_type.span();
+        let mut bounds: Punctuated<_, _> = parse_quote!(#trait_ident #trait_generic_names);
+        if !sized {
+            bounds.push(parse_quote!(?Sized));
         }
+        for bound in Self::BOUNDS {
+            let bound_ident = syn::Ident::new(bound, span);
+            bounds.push(parse_quote!(#bound_ident))
+        }
+
+        // Add the type wrapper in the wrapper type for the generic.
+        impl_generics
+            .params
+            .push(syn::GenericParam::Type(syn::TypeParam {
+                attrs: Vec::new(),
+                ident: generic_type.clone(),
+                colon_token: Some(syn::Token![:](span)),
+                bounds,
+                eq_token: None,
+                default: None,
+            }));
 
         Ok(parse_quote!(
             #[automatically_derived]

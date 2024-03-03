@@ -68,3 +68,7 @@ harness = false
 name = "derive_ref"
 path = "tests/derive_ref/mod.rs"
 harness = false
+[[test]]
+name = "derive_cow"
+path = "tests/derive_cow/mod.rs"
+harness = false
