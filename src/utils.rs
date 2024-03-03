@@ -45,7 +45,7 @@ pub fn signature_to_function_call(sig: &syn::Signature) -> syn::Result<syn::Expr
 /// Convert a function signature to a static method call with the same arguments.
 ///
 /// A static method (or associated type method)
-pub fn signature_to_static_method_call(
+pub fn signature_to_associated_function_call(
     sig: &syn::Signature,
     trait_ident: &syn::Ident,
     generic_type: &syn::Ident,

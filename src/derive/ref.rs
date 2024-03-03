@@ -1,8 +1,8 @@
 use syn::{parse_quote, spanned::Spanned};
 
 use crate::utils::{
-    deref_expr, generics_declaration_to_generics, signature_to_method_call,
-    signature_to_static_method_call, trait_to_generic_ident,
+    deref_expr, generics_declaration_to_generics, signature_to_associated_function_call,
+    signature_to_method_call, trait_to_generic_ident,
 };
 
 pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
@@ -48,7 +48,7 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
                 call.receiver = Box::new(deref_expr(deref_expr(*call.receiver)));
                 call.into()
             } else {
-                let call = signature_to_static_method_call(
+                let call = signature_to_associated_function_call(
                     &m.sig,
                     &trait_ident,
                     &generic_type,
@@ -222,6 +222,75 @@ mod tests {
                     #[automatically_derived]
                     impl<MT: MyTrait + ?Sized> MyTrait for &MT {
                         type Return = <MT as MyTrait>::Return;
+                    }
+                )
+            );
+        }
+
+        #[test]
+        fn associated_function() {
+            let trait_ = parse_quote!(
+                trait MyTrait {
+                    fn run();
+                }
+            );
+            let derived = super::super::derive(&trait_).unwrap();
+
+            assert_eq!(
+                derived,
+                parse_quote!(
+                    #[automatically_derived]
+                    impl<MT: MyTrait + ?Sized> MyTrait for &MT {
+                        #[inline]
+                        fn run() {
+                            <MT as MyTrait>::run()
+                        }
+                    }
+                )
+            );
+        }
+
+        #[test]
+        fn associated_function_return_type() {
+            let trait_ = parse_quote!(
+                trait MyTrait {
+                    fn run() -> usize;
+                }
+            );
+            let derived = super::super::derive(&trait_).unwrap();
+
+            assert_eq!(
+                derived,
+                parse_quote!(
+                    #[automatically_derived]
+                    impl<MT: MyTrait + ?Sized> MyTrait for &MT {
+                        #[inline]
+                        fn run() -> usize {
+                            <MT as MyTrait>::run()
+                        }
+                    }
+                )
+            );
+        }
+
+        #[test]
+        fn associated_function_generics() {
+            let trait_ = parse_quote!(
+                trait MyTrait<T> {
+                    fn run();
+                }
+            );
+            let derived = super::super::derive(&trait_).unwrap();
+
+            assert_eq!(
+                derived,
+                parse_quote!(
+                    #[automatically_derived]
+                    impl<T, MT: MyTrait<T> + ?Sized> MyTrait<T> for &MT {
+                        #[inline]
+                        fn run() {
+                            <MT as MyTrait<T>>::run()
+                        }
                     }
                 )
             );
