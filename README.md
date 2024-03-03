@@ -99,7 +99,7 @@ to provide a default behaviour as an external function, such as what
 The following example implements a very simple visitor trait for types
 able to process a `&str` char-by-char.
 
-```rust
+```rust,ignore
 extern crate blanket;
 use blanket::blanket;
 
@@ -126,7 +126,7 @@ mod visitor {
 and then create a default implementation for all of the declared methods,
 generating the following code:
 
-```rust
+```rust,ignore
 trait Visitor {
     fn visit_string(&self, s: &str) {
       visitor::visit_string(self, s)
