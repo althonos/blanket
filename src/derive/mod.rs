@@ -4,6 +4,8 @@ mod r#mut;
 mod rc;
 mod r#ref;
 
+// ---------------------------------------------------------------------------
+
 #[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Derive {
     Box,
@@ -40,4 +42,11 @@ impl Derive {
             Derive::Arc => self::arc::derive(trait_),
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+
+/// A marker trait for types wrapping a single other type.
+trait WrapperType {
+    fn wrap(ty: &syn::Ident) -> syn::Type;
 }

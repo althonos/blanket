@@ -1,7 +1,16 @@
 use syn::parse_quote;
 use syn::spanned::Spanned;
 
+use super::WrapperType;
 use crate::items::derive_impl;
+
+pub struct ArcType;
+
+impl WrapperType for ArcType {
+    fn wrap(ty: &syn::Ident) -> syn::Type {
+        parse_quote!(std::sync::Arc<#ty>)
+    }
+}
 
 pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
     derive_impl(
@@ -22,7 +31,7 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
                 Ok(())
             }
         },
-        |generic_type| parse_quote!(std::sync::Arc<#generic_type>),
+        ArcType::wrap,
     )
 }
 

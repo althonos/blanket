@@ -21,7 +21,11 @@ where
     let mut call: syn::Expr = if let Some(r) = m.sig.receiver() {
         check_receiver(r)?;
         let mut call = signature_to_method_call(&m.sig)?;
-        call.receiver = Box::new(deref_expr(deref_expr(*call.receiver)));
+        if r.reference.is_some() {
+            call.receiver = Box::new(deref_expr(deref_expr(*call.receiver)));
+        } else {
+            call.receiver = Box::new(deref_expr(*call.receiver));
+        }
         call.into()
     } else {
         let call = signature_to_associated_function_call(
@@ -75,10 +79,6 @@ where
     let mut trait_generic_names = trait_generics.clone();
     trait_generic_names.params = generics_declaration_to_generics(&trait_generics.params)?;
 
-    impl_generics.params.push(syn::GenericParam::Type(
-        parse_quote!(#generic_type: #trait_ident #trait_generic_names + ?Sized),
-    ));
-
     // build the methods
     let mut methods: Vec<syn::ImplItemFn> = Vec::new();
     let mut assoc_types: Vec<syn::ImplItemType> = Vec::new();
@@ -105,6 +105,28 @@ where
             let item = parse_quote!( #(#attrs)* type #t_ident #t_generics = <#generic_type as #trait_ident #trait_generic_names>::#t_ident #t_generic_names #where_clause ; );
             assoc_types.push(item);
         }
+    }
+
+    // check if any method has a `Self` receiver, which would mean we cannot
+    // relax the `Sized` trait requirement
+    let mut sized = false;
+    for item in trait_.items.iter() {
+        if let syn::TraitItem::Fn(ref m) = item {
+            if let Some(r) = m.sig.receiver() {
+                sized |= r.reference.is_none();
+            }
+        }
+    }
+
+    // Add generic type for the type we are creating ourselves
+    if sized {
+        impl_generics.params.push(syn::GenericParam::Type(
+            parse_quote!(#generic_type: #trait_ident #trait_generic_names),
+        ));
+    } else {
+        impl_generics.params.push(syn::GenericParam::Type(
+            parse_quote!(#generic_type: #trait_ident #trait_generic_names + ?Sized),
+        ));
     }
 
     Ok(parse_quote!(

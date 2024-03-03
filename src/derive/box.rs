@@ -1,88 +1,40 @@
 use syn::{parse_quote, spanned::Spanned};
 
-use crate::utils::{
-    deref_expr, generics_declaration_to_generics, signature_to_associated_function_call,
-    signature_to_method_call, trait_to_generic_ident,
+use crate::{
+    items::derive_impl,
+    utils::{
+        deref_expr, generics_declaration_to_generics, signature_to_associated_function_call,
+        signature_to_method_call, trait_to_generic_ident,
+    },
 };
 
-pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
-    // build an identifier for the generic type used for the implementation
-    let trait_ident = &trait_.ident;
-    let generic_type = trait_to_generic_ident(&trait_);
+use super::WrapperType;
 
-    // build the generics for the impl block:
-    // we use the same generics as the trait itself, plus
-    // a generic type that implements the trait for which we provide the
-    // blanket implementation
-    let trait_generics = &trait_.generics;
-    let where_clause = &trait_.generics.where_clause;
-    let mut impl_generics = trait_generics.clone();
+pub struct BoxType;
 
-    // we must however remove the generic type bounds, to avoid repeating them
-    let mut trait_generic_names = trait_generics.clone();
-    trait_generic_names.params = generics_declaration_to_generics(&trait_generics.params)?;
-
-    impl_generics.params.push(syn::GenericParam::Type(
-        parse_quote!(#generic_type: #trait_ident #trait_generic_names),
-    ));
-
-    // build the methods
-    let mut methods: Vec<syn::ImplItemFn> = Vec::new();
-    let mut assoc_types: Vec<syn::ImplItemType> = Vec::new();
-    for item in trait_.items.iter() {
-        if let syn::TraitItem::Fn(ref m) = item {
-            let call: syn::Expr = if let Some(r) = m.sig.receiver() {
-                let mut call = signature_to_method_call(&m.sig)?;
-                let err = if r.colon_token.is_some() {
-                    Some("cannot derive `Box` for a trait declaring methods with arbitrary receiver types")
-                } else if r.reference.is_some() {
-                    call.receiver = Box::new(deref_expr(deref_expr(*call.receiver)));
-                    None
-                } else {
-                    call.receiver = Box::new(deref_expr(*call.receiver));
-                    None
-                };
-                if let Some(msg) = err {
-                    return Err(syn::Error::new(r.span(), msg));
-                }
-                call.into()
-            } else {
-                let call = signature_to_associated_function_call(
-                    &m.sig,
-                    &trait_ident,
-                    &generic_type,
-                    &trait_generic_names,
-                )?;
-                call.into()
-            };
-
-            let signature = &m.sig;
-            let item = parse_quote!(#[inline] #signature { #call });
-            methods.push(item);
-        }
-
-        if let syn::TraitItem::Type(t) = item {
-            let t_ident = &t.ident;
-            let attrs = &t.attrs;
-
-            let t_generics = &t.generics;
-            let where_clause = &t.generics.where_clause;
-            let mut t_generic_names = t_generics.clone();
-            t_generic_names.params = generics_declaration_to_generics(&t_generics.params)?;
-
-            let item = parse_quote!( #(#attrs)* type #t_ident #t_generics = <#generic_type as #trait_ident #trait_generic_names>::#t_ident #t_generic_names #where_clause ; );
-            assoc_types.push(item);
-        }
+impl WrapperType for BoxType {
+    fn wrap(ty: &syn::Ident) -> syn::Type {
+        parse_quote!(Box<#ty>)
     }
+}
 
-    // generate the impl block
-    Ok(parse_quote!(
-        #[automatically_derived]
-        impl #impl_generics #trait_ident #trait_generic_names for Box<#generic_type> #where_clause {
-            #(#assoc_types)*
-            #(#methods)*
-        }
-    ))
+pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
+    derive_impl(
+        trait_,
+        |r| {
+            let err = if r.colon_token.is_some() {
+                Some("cannot derive `Box` for a trait declaring methods with arbitrary receiver types")
+            } else {
+                None
+            };
+            if let Some(msg) = err {
+                Err(syn::Error::new(r.span(), msg))
+            } else {
+                Ok(())
+            }
+        },
+        BoxType::wrap,
+    )
 }
 
 #[cfg(test)]
@@ -101,7 +53,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait> MyTrait for Box<MT> {}
+                    impl<MT: MyTrait + ?Sized> MyTrait for Box<MT> {}
                 )
             );
         }
@@ -117,7 +69,7 @@ mod tests {
                 super::super::derive(&trait_).unwrap(),
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait> MyTrait for Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for Box<MT> {
                         #[inline]
                         fn my_method(&self) {
                             (*(*self)).my_method()
@@ -138,7 +90,7 @@ mod tests {
                 super::super::derive(&trait_).unwrap(),
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait> MyTrait for Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for Box<MT> {
                         #[inline]
                         fn my_method(&mut self) {
                             (*(*self)).my_method()
@@ -190,7 +142,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<T, MT: MyTrait<T>> MyTrait<T> for Box<MT> {}
+                    impl<T, MT: MyTrait<T> + ?Sized> MyTrait<T> for Box<MT> {}
                 )
             );
         }
@@ -206,7 +158,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<T: 'static + Send, MT: MyTrait<T>> MyTrait<T> for Box<MT> {}
+                    impl<T: 'static + Send, MT: MyTrait<T> + ?Sized> MyTrait<T> for Box<MT> {}
                 )
             );
         }
@@ -222,7 +174,10 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<'a, 'b: 'a, T: 'static + Send, MT: MyTrait<'a, 'b, T>> MyTrait<'a, 'b, T> for Box<MT> {}
+                    impl<'a, 'b: 'a, T: 'static + Send, MT: MyTrait<'a, 'b, T> + ?Sized>
+                        MyTrait<'a, 'b, T> for Box<MT>
+                    {
+                    }
                 )
             );
         }
@@ -240,7 +195,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait> MyTrait for Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for Box<MT> {
                         type Return = <MT as MyTrait>::Return;
                     }
                 )
@@ -260,7 +215,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait> MyTrait for Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for Box<MT> {
                         type Return = <MT as MyTrait>::Return;
                     }
                 )
@@ -280,7 +235,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait> MyTrait for Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for Box<MT> {
                         type r#type = <MT as MyTrait>::r#type;
                     }
                 )
@@ -303,7 +258,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait> MyTrait for Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for Box<MT> {
                         #[cfg(target_arch = "wasm32")]
                         type Return = <MT as MyTrait>::Return;
                         #[cfg(not(target_arch = "wasm32"))]
@@ -326,7 +281,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<T, MT: MyTrait<T>> MyTrait<T> for Box<MT> {
+                    impl<T, MT: MyTrait<T> + ?Sized> MyTrait<T> for Box<MT> {
                         type Return = <MT as MyTrait<T>>::Return;
                     }
                 )
@@ -346,7 +301,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait> MyTrait for Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for Box<MT> {
                         type Return<T> = <MT as MyTrait>::Return<T>;
                     }
                 )
@@ -366,7 +321,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait> MyTrait for Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for Box<MT> {
                         type Return<T: 'static + Send> = <MT as MyTrait>::Return<T>;
                     }
                 )
@@ -388,7 +343,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait> MyTrait for Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for Box<MT> {
                         type Return<'a> = <MT as MyTrait>::Return<'a>
                         where
                             Self: 'a;
