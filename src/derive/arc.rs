@@ -3,6 +3,7 @@ use syn::spanned::Spanned;
 
 use crate::utils::deref_expr;
 use crate::utils::generics_declaration_to_generics;
+use crate::utils::signature_to_associated_function_call;
 use crate::utils::signature_to_method_call;
 use crate::utils::trait_to_generic_ident;
 
@@ -32,7 +33,7 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
     let mut assoc_types: Vec<syn::ImplItemType> = Vec::new();
     for item in trait_.items.iter() {
         if let syn::TraitItem::Fn(ref m) = item {
-            if let Some(r) = m.sig.receiver() {
+            let call: syn::Expr = if let Some(r) = m.sig.receiver() {
                 let err = if r.colon_token.is_some() {
                     Some("cannot derive `Arc` for a trait declaring methods with arbitrary receiver types")
                 } else if r.mutability.is_some() {
@@ -45,10 +46,19 @@ pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
                 if let Some(msg) = err {
                     return Err(syn::Error::new(r.span(), msg));
                 }
-            }
 
-            let mut call = signature_to_method_call(&m.sig)?;
-            call.receiver = Box::new(deref_expr(deref_expr(*call.receiver)));
+                let mut call = signature_to_method_call(&m.sig)?;
+                call.receiver = Box::new(deref_expr(deref_expr(*call.receiver)));
+                call.into()
+            } else {
+                let call = signature_to_associated_function_call(
+                    &m.sig,
+                    &trait_ident,
+                    &generic_type,
+                    &trait_generic_names,
+                )?;
+                call.into()
+            };
 
             let signature = &m.sig;
             let item = parse_quote!(#[inline] #signature { #call });

@@ -14,6 +14,6 @@ impl StaticChecker for NoOpChecker {
 }
 
 fn main() {
-    assert!(impls!(NoOpChecker:  StaticChecker));
+    assert!(impls!( NoOpChecker:  StaticChecker));
     assert!(impls!(&NoOpChecker: StaticChecker));
 }
