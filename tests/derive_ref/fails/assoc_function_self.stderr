@@ -1,0 +1,28 @@
+error[E0308]: mismatched types
+ --> tests/derive_ref/fails/assoc_function_self.rs:4:1
+  |
+4 | #[blanket(derive(Ref))]
+  | ^^^^^^^^^^^^^^^^^^^^^^^ expected `&MD`, found type parameter `MD`
+5 | pub trait MyDefault {
+  |           --------- found this type parameter
+6 |     fn default() -> Self;
+  |                     ---- expected `&MD` because of return type
+  |
+  = note:   expected reference `&_`
+          found type parameter `_`
+  = note: this error originates in the attribute macro `blanket` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0277]: the size for values of type `MD` cannot be known at compilation time
+ --> tests/derive_ref/fails/assoc_function_self.rs:4:1
+  |
+4 | #[blanket(derive(Ref))]
+  | ^^^^^^^^^^^^^^^^^^^^^^^ doesn't have a size known at compile-time
+5 | pub trait MyDefault {
+  |           --------- this type parameter needs to be `Sized`
+  |
+  = note: the return type of a function must have a statically known size
+  = note: this error originates in the attribute macro `blanket` (in Nightly builds, run with -Z macro-backtrace for more info)
+help: consider removing the `?Sized` bound to make the type parameter `Sized`
+  |
+4 - #[blanket(derive(Ref))]
+  |

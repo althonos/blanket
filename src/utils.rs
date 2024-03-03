@@ -2,6 +2,8 @@ use quote::quote_spanned;
 use syn::{parse_quote, punctuated::Punctuated, spanned::Spanned, GenericParam, Token};
 
 /// Convert a function signature to a function call with the same arguments.
+///
+/// Given `function(a: &str, b: usize)`, get `function(a, b)`.
 pub fn signature_to_function_call(sig: &syn::Signature) -> syn::Result<syn::ExprCall> {
     // Simply use the function ident as the function expression.
     let funcexpr = syn::ExprPath {
@@ -44,7 +46,8 @@ pub fn signature_to_function_call(sig: &syn::Signature) -> syn::Result<syn::Expr
 
 /// Convert a function signature to a static method call with the same arguments.
 ///
-/// A static method (or associated type method)
+/// The call need to be modified to use a fully qualified path to qualify the
+/// method, otherwise it may conflict with other methods in the namespace.
 pub fn signature_to_associated_function_call(
     sig: &syn::Signature,
     trait_ident: &syn::Ident,
@@ -55,11 +58,11 @@ pub fn signature_to_associated_function_call(
     if let syn::Expr::Path(ref mut exprpath) = call.func.as_mut() {
         let span = generic_type.span();
         exprpath.qself = Some(syn::QSelf {
-            lt_token: syn::Token![<](span),
+            lt_token: Token![<](span),
             ty: Box::new(parse_quote!(#generic_type)),
             position: 1,
-            as_token: Some(syn::Token![as](span)),
-            gt_token: syn::Token![>](span),
+            as_token: Some(Token![as](span)),
+            gt_token: Token![>](span),
         });
 
         let path_arguments = if trait_generic_names.params.is_empty() {
@@ -80,6 +83,8 @@ pub fn signature_to_associated_function_call(
 }
 
 /// Convert a function signature to a method call with the same arguments.
+///
+/// Given `fn function(&self, a: &str, b: usize)`, get `self.function(a, b)`.
 pub fn signature_to_method_call(sig: &syn::Signature) -> syn::Result<syn::ExprMethodCall> {
     // Extract receiver
     let receiver = sig.receiver().expect("method has no receiver");
@@ -149,6 +154,8 @@ pub fn deref_expr(expr: syn::Expr) -> syn::Expr {
 /// This function extracts the initials of the trait identifier. If this results
 /// in a generic type identifier already present in the generics of that trait,
 /// as many underscores are added to the end of the identifier.
+///
+/// Given a trait `MyAmazingTrait`, get `MAT`.
 pub fn trait_to_generic_ident(trait_: &syn::ItemTrait) -> syn::Ident {
     let mut raw = trait_
         .ident
