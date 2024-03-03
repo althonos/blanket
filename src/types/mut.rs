@@ -1,34 +1,20 @@
-use syn::{parse_quote, spanned::Spanned};
+use syn::parse_quote;
 
-use crate::items::derive_impl;
+use crate::derive::Receiver;
+use crate::derive::WrapperType;
 
-use super::WrapperType;
+struct MutType;
 
-pub struct BoxType;
-
-impl WrapperType for BoxType {
+impl WrapperType for MutType {
+    const NAME: &'static str = "Mut";
+    const RECEIVERS: &'static [Receiver] = &[Receiver::Ref, Receiver::Mut];
     fn wrap(ty: &syn::Ident) -> syn::Type {
-        parse_quote!(std::boxed::Box<#ty>)
+        parse_quote!(&mut #ty)
     }
 }
 
 pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
-    derive_impl(
-        trait_,
-        |r| {
-            let err = if r.colon_token.is_some() {
-                Some("cannot derive `Box` for a trait declaring methods with arbitrary receiver types")
-            } else {
-                None
-            };
-            if let Some(msg) = err {
-                Err(syn::Error::new(r.span(), msg))
-            } else {
-                Ok(())
-            }
-        },
-        BoxType::wrap,
-    )
+    MutType::derive(trait_)
 }
 
 #[cfg(test)]
@@ -47,28 +33,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for std::boxed::Box<MT> {}
-                )
-            );
-        }
-
-        #[test]
-        fn receiver_ref() {
-            let trait_ = parse_quote!(
-                trait MyTrait {
-                    fn my_method(&self);
-                }
-            );
-            assert_eq!(
-                super::super::derive(&trait_).unwrap(),
-                parse_quote!(
-                    #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for std::boxed::Box<MT> {
-                        #[inline]
-                        fn my_method(&self) {
-                            (*(*self)).my_method()
-                        }
-                    }
+                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {}
                 )
             );
         }
@@ -84,7 +49,7 @@ mod tests {
                 super::super::derive(&trait_).unwrap(),
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for std::boxed::Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {
                         #[inline]
                         fn my_method(&mut self) {
                             (*(*self)).my_method()
@@ -101,25 +66,14 @@ mod tests {
                     fn my_method(self);
                 }
             );
-            assert_eq!(
-                super::super::derive(&trait_).unwrap(),
-                parse_quote!(
-                    #[automatically_derived]
-                    impl<MT: MyTrait> MyTrait for std::boxed::Box<MT> {
-                        #[inline]
-                        fn my_method(self) {
-                            (*self).my_method()
-                        }
-                    }
-                )
-            );
+            assert!(super::super::derive(&trait_).is_err());
         }
 
         #[test]
         fn receiver_arbitrary() {
             let trait_ = parse_quote!(
                 trait MyTrait {
-                    fn my_method(self: std::boxed::Box<Self>);
+                    fn my_method(self: Box<Self>);
                 }
             );
             assert!(super::super::derive(&trait_).is_err());
@@ -128,7 +82,7 @@ mod tests {
         #[test]
         fn generics() {
             let trait_ = parse_quote!(
-                trait MyTrait<T> {}
+                trait Trait<T> {}
             );
             let derived = super::super::derive(&trait_).unwrap();
 
@@ -136,7 +90,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<T, MT: MyTrait<T> + ?Sized> MyTrait<T> for std::boxed::Box<MT> {}
+                    impl<T, T_: Trait<T> + ?Sized> Trait<T> for &mut T_ {}
                 )
             );
         }
@@ -144,7 +98,7 @@ mod tests {
         #[test]
         fn generics_bounded() {
             let trait_ = parse_quote!(
-                trait MyTrait<T: 'static + Send> {}
+                trait Trait<T: 'static + Send> {}
             );
             let derived = super::super::derive(&trait_).unwrap();
 
@@ -152,7 +106,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<T: 'static + Send, MT: MyTrait<T> + ?Sized> MyTrait<T> for std::boxed::Box<MT> {}
+                    impl<T: 'static + Send, T_: Trait<T> + ?Sized> Trait<T> for &mut T_ {}
                 )
             );
         }
@@ -160,7 +114,7 @@ mod tests {
         #[test]
         fn generics_lifetime() {
             let trait_ = parse_quote!(
-                trait MyTrait<'a, 'b: 'a, T: 'static + Send> {}
+                trait Trait<'a, 'b: 'a, T: 'static + Send> {}
             );
             let derived = super::super::derive(&trait_).unwrap();
 
@@ -168,8 +122,8 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<'a, 'b: 'a, T: 'static + Send, MT: MyTrait<'a, 'b, T> + ?Sized>
-                        MyTrait<'a, 'b, T> for std::boxed::Box<MT>
+                    impl<'a, 'b: 'a, T: 'static + Send, T_: Trait<'a, 'b, T> + ?Sized>
+                        Trait<'a, 'b, T> for &mut T_
                     {
                     }
                 )
@@ -189,7 +143,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for std::boxed::Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {
                         type Return = <MT as MyTrait>::Return;
                     }
                 )
@@ -209,7 +163,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for std::boxed::Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {
                         type Return = <MT as MyTrait>::Return;
                     }
                 )
@@ -229,7 +183,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for std::boxed::Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {
                         type r#type = <MT as MyTrait>::r#type;
                     }
                 )
@@ -252,7 +206,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for std::boxed::Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {
                         #[cfg(target_arch = "wasm32")]
                         type Return = <MT as MyTrait>::Return;
                         #[cfg(not(target_arch = "wasm32"))]
@@ -275,7 +229,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<T, MT: MyTrait<T> + ?Sized> MyTrait<T> for std::boxed::Box<MT> {
+                    impl<T, MT: MyTrait<T> + ?Sized> MyTrait<T> for &mut MT {
                         type Return = <MT as MyTrait<T>>::Return;
                     }
                 )
@@ -295,7 +249,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for std::boxed::Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {
                         type Return<T> = <MT as MyTrait>::Return<T>;
                     }
                 )
@@ -315,7 +269,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for std::boxed::Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {
                         type Return<T: 'static + Send> = <MT as MyTrait>::Return<T>;
                     }
                 )
@@ -337,7 +291,7 @@ mod tests {
                 derived,
                 parse_quote!(
                     #[automatically_derived]
-                    impl<MT: MyTrait + ?Sized> MyTrait for std::boxed::Box<MT> {
+                    impl<MT: MyTrait + ?Sized> MyTrait for &mut MT {
                         type Return<'a> = <MT as MyTrait>::Return<'a>
                         where
                             Self: 'a;

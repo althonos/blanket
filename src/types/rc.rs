@@ -1,28 +1,20 @@
-use syn::{parse_quote, spanned::Spanned};
+use syn::parse_quote;
 
-use crate::items::derive_impl;
+use crate::derive::Receiver;
+use crate::derive::WrapperType;
+
+struct RcType;
+
+impl WrapperType for RcType {
+    const NAME: &'static str = "Rc";
+    const RECEIVERS: &'static [Receiver] = &[Receiver::Ref];
+    fn wrap(ty: &syn::Ident) -> syn::Type {
+        parse_quote!(std::rc::Rc<#ty>)
+    }
+}
 
 pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
-    derive_impl(
-        trait_,
-        |r| {
-            let err = if r.colon_token.is_some() {
-                Some("cannot derive `Rc` for a trait declaring methods with arbitrary receiver types")
-            } else if r.mutability.is_some() {
-                Some("cannot derive `Rc` for a trait declaring `&mut self` methods")
-            } else if r.reference.is_none() {
-                Some("cannot derive `Rc` for a trait declaring `self` methods")
-            } else {
-                None
-            };
-            if let Some(msg) = err {
-                Err(syn::Error::new(r.span(), msg))
-            } else {
-                Ok(())
-            }
-        },
-        |generic_type| parse_quote!(std::rc::Rc<#generic_type>),
-    )
+    RcType::derive(trait_)
 }
 
 #[cfg(test)]

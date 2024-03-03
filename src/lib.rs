@@ -14,14 +14,14 @@ use syn::{parse_macro_input, punctuated::Punctuated, spanned::Spanned};
 
 mod default;
 mod derive;
-mod items;
+mod types;
 mod utils;
 
 // ---------------------------------------------------------------------------
 
 struct Args {
     default: Option<syn::Path>,
-    derives: HashSet<derive::Derive>,
+    derives: HashSet<types::Type>,
 }
 
 impl Args {
@@ -35,7 +35,7 @@ impl Args {
                     Punctuated::<syn::Path, syn::Token![,]>::parse_separated_nonempty,
                 )?;
                 for pair in types.into_pairs() {
-                    if let Some(d) = derive::Derive::from_path(pair.value()) {
+                    if let Some(d) = types::Type::from_path(pair.value()) {
                         derives.insert(d);
                     } else {
                         return Err(syn::Error::new(
