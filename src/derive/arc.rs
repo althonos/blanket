@@ -1,91 +1,29 @@
 use syn::parse_quote;
 use syn::spanned::Spanned;
 
-use crate::utils::deref_expr;
-use crate::utils::generics_declaration_to_generics;
-use crate::utils::signature_to_associated_function_call;
-use crate::utils::signature_to_method_call;
-use crate::utils::trait_to_generic_ident;
+use crate::items::derive_impl;
 
 pub fn derive(trait_: &syn::ItemTrait) -> syn::Result<syn::ItemImpl> {
-    // build an identifier for the generic type used for the implementation
-    let trait_ident = &trait_.ident;
-    let generic_type = trait_to_generic_ident(&trait_);
-
-    // build the generics for the impl block:
-    // we use the same generics as the trait itself, plus
-    // a generic type that implements the trait for which we provide the
-    // blanket implementation
-    let trait_generics = &trait_.generics;
-    let where_clause = &trait_.generics.where_clause;
-    let mut impl_generics = trait_generics.clone();
-
-    // we must however remove the generic type bounds, to avoid repeating them
-    let mut trait_generic_names = trait_generics.clone();
-    trait_generic_names.params = generics_declaration_to_generics(&trait_generics.params)?;
-
-    impl_generics.params.push(syn::GenericParam::Type(
-        parse_quote!(#generic_type: #trait_ident #trait_generic_names + ?Sized),
-    ));
-
-    // build the methods & associated types.
-    let mut methods: Vec<syn::ImplItemFn> = Vec::new();
-    let mut assoc_types: Vec<syn::ImplItemType> = Vec::new();
-    for item in trait_.items.iter() {
-        if let syn::TraitItem::Fn(ref m) = item {
-            let call: syn::Expr = if let Some(r) = m.sig.receiver() {
-                let err = if r.colon_token.is_some() {
-                    Some("cannot derive `Arc` for a trait declaring methods with arbitrary receiver types")
-                } else if r.mutability.is_some() {
-                    Some("cannot derive `Arc` for a trait declaring `&mut self` methods")
-                } else if r.reference.is_none() {
-                    Some("cannot derive `Arc` for a trait declaring `self` methods")
-                } else {
-                    None
-                };
-                if let Some(msg) = err {
-                    return Err(syn::Error::new(r.span(), msg));
-                }
-
-                let mut call = signature_to_method_call(&m.sig)?;
-                call.receiver = Box::new(deref_expr(deref_expr(*call.receiver)));
-                call.into()
+    derive_impl(
+        trait_,
+        |r| {
+            let err = if r.colon_token.is_some() {
+                Some("cannot derive `Arc` for a trait declaring methods with arbitrary receiver types")
+            } else if r.mutability.is_some() {
+                Some("cannot derive `Arc` for a trait declaring `&mut self` methods")
+            } else if r.reference.is_none() {
+                Some("cannot derive `Arc` for a trait declaring `self` methods")
             } else {
-                let call = signature_to_associated_function_call(
-                    &m.sig,
-                    &trait_ident,
-                    &generic_type,
-                    &trait_generic_names,
-                )?;
-                call.into()
+                None
             };
-
-            let signature = &m.sig;
-            let item = parse_quote!(#[inline] #signature { #call });
-            methods.push(item)
-        }
-
-        if let syn::TraitItem::Type(t) = item {
-            let t_ident = &t.ident;
-            let attrs = &t.attrs;
-
-            let t_generics = &t.generics;
-            let where_clause = &t.generics.where_clause;
-            let mut t_generic_names = t_generics.clone();
-            t_generic_names.params = generics_declaration_to_generics(&t_generics.params)?;
-
-            let item = parse_quote!( #(#attrs)* type #t_ident #t_generics = <#generic_type as #trait_ident #trait_generic_names>::#t_ident #t_generic_names #where_clause ; );
-            assoc_types.push(item);
-        }
-    }
-
-    Ok(parse_quote!(
-        #[automatically_derived]
-        impl #impl_generics #trait_ident #trait_generic_names for std::sync::Arc<#generic_type> #where_clause {
-            #(#assoc_types)*
-            #(#methods)*
-        }
-    ))
+            if let Some(msg) = err {
+                Err(syn::Error::new(r.span(), msg))
+            } else {
+                Ok(())
+            }
+        },
+        |generic_type| parse_quote!(std::sync::Arc<#generic_type>),
+    )
 }
 
 #[cfg(test)]
